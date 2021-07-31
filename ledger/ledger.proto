@@ -1,0 +1,38 @@
+// -*- mode: protobuf -*-
+//
+// A schema for Beancount's parser output. This is the intermediate state of the
+// data, merely representing the production of the parser, before the subsequent
+// processing (booking) that will produce the finalized directives.
+//
+// The data structures seen here are not visible in the final output nor to the
+// regular plugins, which see the resolved ones produced after booking and
+// interpolation.
+
+syntax = "proto3";
+
+package ledger;
+
+import 'ledger/data.proto';
+import 'ledger/options/options.proto';
+
+option go_package = "go.vixal.xyz/esp/ledger";
+
+// Container for all data produced by the parser, and the by Beancount in
+// general (after booking, interpolation, and plugins processing.
+message Ledger {
+  // A list of directives, with ownership.
+  repeated ledger.Directive directives = 1;
+
+  // A list of errors encountered during parsing and processing.
+  repeated ledger.Error errors = 2;
+
+  // Parsed options.
+  optional options.Options options = 3;
+
+  // Processing details.
+  optional options.ProcessingInfo info = 4;
+}
+
+// TODO(blais): the final balances accumulated from processing the Ledger shoudl
+// be produced as output, so that booking on top of it is cheap and fast. This
+// would be useful for importers, for example.

@@ -1,0 +1,22 @@
+2011/03/15   Trader Joe's
+    Expenses:Groceries   100.00
+    Assets:Checking
+
+2004/09/29 Pacific Bell
+    Expenses:Pacific Bell              23.00
+    Assets:Checking
+
+2016/Jun/21  FD savings ; Deposit for 1 year
+    Asset:FD                        10000
+    Asset:CurrentAccount
+
+2017/Mar/31  Accrued interest on Bank FD
+    Income:Interest:Receivable       800
+    Income:FD-Interest
+
+2017/Jun/22  FD Matures
+    Asset:CurrentAccount            11000
+    Income:Interest:Receivable       -800
+    Income:FD-Interest               -200
+    Asset:FD                       -10000
+

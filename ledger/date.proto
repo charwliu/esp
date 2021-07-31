@@ -1,0 +1,16 @@
+// -*- mode: protobuf -*-
+//
+// Representation of civil date.
+
+syntax = "proto3";
+
+package ledger;
+option go_package = "go.vixal.xyz/esp/ledger";
+
+// Civil dates.
+// See https://abseil.io/blog/20181010-civil-time.
+message Date {
+  int32 year = 1;
+  int32 month = 2;
+  int32 day = 3;
+}

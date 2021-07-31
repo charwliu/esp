@@ -1,0 +1,80 @@
+// -*- mode: protobuf -*-
+//
+// Schemas for messages that are specific to Beancount's parser output. These
+// are only used for the intermediate state of the parsed data, merely
+// representing the production of the parser, before the subsequent processing
+// (booking) that will produce the finalized directives.
+//
+// The data structures seen here are not visible in the final output nor to the
+// regular plugins, which see the resolved ones produced after booking and
+// interpolation.
+
+syntax = "proto3";
+
+package ledger;
+
+import 'ledger/number.proto';
+import 'ledger/date.proto';
+
+option go_package = "go.vixal.xyz/esp/ledger";
+
+// A container for all the parser specs produced on a posting.
+// These are the objects that directly represent the parsed input yet to be
+// interpolated and booked.
+message Spec {
+  // A UnitSpec instance.
+  optional UnitSpec units = 8;
+
+  // A CostSpec instance. Warning: This particularly filled field is only used in
+  // the production of the intermediate representation produced by the parser
+  // and never set in the final processed output from Beancount. Do not use
+  // this.
+  optional CostSpec cost = 9;
+
+  // A PriceSpec instance.
+  optional PriceSpec price = 10;
+}
+
+// A unit specification. This is like `Amount`, except that either the number or
+// currency can be missing.
+message UnitSpec {
+  optional ledger.Number number = 1;
+  optional string currency = 2;
+}
+
+// A price specification. This is similar to `Amount`, except that either the
+// number or currency can be missing.
+message PriceSpec {
+  optional ledger.Number number = 1;
+  optional string currency = 2;
+
+  // A flag that determines whether the expression above refers to a per-unit
+  // price or a total price, yet to be calculated.
+  optional bool isTotal = 3;
+}
+
+// A cost specification, which still requires to be filled in, and the final
+// per-unit numbers be calculated. This gets translated to Cost after booking
+// and interpolation.
+message CostSpec {
+  // A decimal number, exclusive the per-unit cost.
+  // TODO(blais): Rename this to number_per_unit; it's been annoying.
+  optional ledger.Number numberPer = 1;
+
+  // A decimal number, the total cost/price.
+  optional ledger.Number numberTotal = 2;
+
+  // A string, the commodity of the cost.
+  optional string currency = 3;
+
+  // A datetime.date for the date that the lot was created at. There should
+  // always be a valid date.
+  optional ledger.Date date = 4;
+
+  // A string for the label of this lot, or None, if there is no label.
+  optional string label = 5;
+
+  // A flag explicitly indicating to merge all matching lots and compute the
+  // average cost.
+  optional bool mergeCost = 6;
+}

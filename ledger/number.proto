@@ -1,0 +1,13 @@
+// Proto serialization for decimal numbers.
+syntax = "proto3";
+
+package ledger;
+
+option go_package = "go.vixal.xyz/esp/ledger";
+
+// Variant for number representation.
+message Number {
+  // Exact string for the number, explicit and readable, requires conversion.
+  optional string value = 1;
+}
+

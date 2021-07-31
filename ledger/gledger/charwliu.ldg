@@ -1,0 +1,12 @@
+2016-12-04 * "Christmas gift"
+  Liabilities:CreditCard       -153.45 USD
+  Expenses:Gifts
+
+2016-12-06 * "Biang!" "Dinner"
+  Liabilities:CreditCard   -47.23 USD
+  Expenses:Restaurants
+
+2016-12-07 * "Pouring Ribbons" "Drinks with friends"
+  Assets:Cash     -25.00 USD
+  Expenses:Tips     4.00 USD
+  Expenses:Alcohol
