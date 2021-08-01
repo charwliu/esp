@@ -57,7 +57,7 @@ func argparse() ([]string, error) {
 			"will cause warnings.")
 	f.BoolVar(&api.Options.Pedantic, "pedantic", false,
 		"Accounts, tags or commodities not previously declared "+
-			"will cause errors.")
+			"will cause httperror.")
 	f.BoolVar(&api.Options.CheckPayee, "checkpayee", false,
 		"Payee not previously declared will cause error.")
 	f.BoolVar(&api.Options.Stitch, "stitch", false,

@@ -22,7 +22,7 @@ func NewValidator() *validator.Validate {
 	return validate
 }
 
-// ValidatorErrors func for show validation errors for each invalid fields.
+// ValidatorErrors func for show validation httperror for each invalid fields.
 func ValidatorErrors(err error) map[string]string {
 	// Define fields map.
 	fields := map[string]string{}

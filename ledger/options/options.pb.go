@@ -440,7 +440,7 @@ type Options struct {
 	AccountPreviousEarnings *string `protobuf:"bytes,4,opt,name=accountPreviousEarnings,proto3,oneof" json:"accountPreviousEarnings,omitempty"`
 	// Leaf name of the equity account used for inserting conversions that will
 	// zero out remaining amounts due to transfers before the opening date. This
-	// will essentially "fixup" the basic accounting equation due to the errors
+	// will essentially "fixup" the basic accounting equation due to the httperror
 	// that priced conversions introduce. e.g., "Conversions:Previous".
 	AccountPreviousConversions *string `protobuf:"bytes,5,opt,name=accountPreviousConversions,proto3,oneof" json:"accountPreviousConversions,omitempty"`
 	// Leaf name of the equity account used for transferring current retained

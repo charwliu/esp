@@ -1988,7 +1988,7 @@ type LedgerProto struct {
 	unknownFields protoimpl.UnknownFields
 
 	Directives []*Directive            `protobuf:"bytes,1,rep,name=directives,proto3" json:"directives,omitempty"`
-	Errors     []*Error                `protobuf:"bytes,2,rep,name=errors,proto3" json:"errors,omitempty"`
+	Errors     []*Error                `protobuf:"bytes,2,rep,name=httperror,proto3" json:"httperror,omitempty"`
 	Options    *options.Options        `protobuf:"bytes,3,opt,name=options,proto3,oneof" json:"options,omitempty"`
 	Info       *options.ProcessingInfo `protobuf:"bytes,4,opt,name=info,proto3,oneof" json:"info,omitempty"`
 }
@@ -2479,7 +2479,7 @@ var file_ledger_data_proto_depIdxs = []int32{
 	19, // 38: ledger.Directive.custom:type_name -> ledger.Custom
 	21, // 39: ledger.Error.location:type_name -> ledger.Location
 	20, // 40: ledger.LedgerProto.directives:type_name -> ledger.Directive
-	22, // 41: ledger.LedgerProto.errors:type_name -> ledger.Error
+	22, // 41: ledger.LedgerProto.httperror:type_name -> ledger.Error
 	29, // 42: ledger.LedgerProto.options:type_name -> options.Options
 	30, // 43: ledger.LedgerProto.info:type_name -> options.ProcessingInfo
 	1,  // 44: ledger.Meta.KV.value:type_name -> ledger.MetaValue

@@ -11,7 +11,7 @@ import (
 // lintCmd represents the lint command
 var lintCmd = &cobra.Command{
 	Use:   "lint",
-	Short: "Check ledger for errors",
+	Short: "Check ledger for httperror",
 	Run: func(cmd *cobra.Command, args []string) {
 		ledgerFileReader, err := ledger.NewLedgerReader(ledgerFilePath)
 		if err != nil {

@@ -40,8 +40,8 @@ type Ledger struct {
 
 	// A list of directives, with ownership.
 	Directives []*Directive `protobuf:"bytes,1,rep,name=directives,proto3" json:"directives,omitempty"`
-	// A list of errors encountered during parsing and processing.
-	Errors []*Error `protobuf:"bytes,2,rep,name=errors,proto3" json:"errors,omitempty"`
+	// A list of httperror encountered during parsing and processing.
+	Errors []*Error `protobuf:"bytes,2,rep,name=httperror,proto3" json:"httperror,omitempty"`
 	// Parsed options.
 	Options *options.Options `protobuf:"bytes,3,opt,name=options,proto3,oneof" json:"options,omitempty"`
 	// Processing details.
@@ -156,7 +156,7 @@ var file_ledger_ledger_proto_goTypes = []interface{}{
 }
 var file_ledger_ledger_proto_depIdxs = []int32{
 	1, // 0: ledger.Ledger.directives:type_name -> ledger.Directive
-	2, // 1: ledger.Ledger.errors:type_name -> ledger.Error
+	2, // 1: ledger.Ledger.httperror:type_name -> ledger.Error
 	3, // 2: ledger.Ledger.options:type_name -> options.Options
 	4, // 3: ledger.Ledger.info:type_name -> options.ProcessingInfo
 	4, // [4:4] is the sub-list for method output_type

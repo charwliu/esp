@@ -4,6 +4,7 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"syscall"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -15,7 +16,8 @@ func StartServerWithGracefulShutdown(a *fiber.App) {
 
 	go func() {
 		sigint := make(chan os.Signal, 1)
-		signal.Notify(sigint, os.Interrupt) // Catch OS signals.
+		signal.Notify(sigint, syscall.SIGTERM, syscall.SIGHUP, syscall.SIGQUIT, syscall.SIGUSR1, syscall.SIGUSR2)
+
 		<-sigint
 
 		// Received an interrupt signal, shutdown.
