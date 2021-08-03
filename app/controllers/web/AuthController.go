@@ -7,8 +7,7 @@ import (
 	"github.com/gofiber/session/v2"
 	hashing "github.com/thomasvvugt/fiber-hashing"
 	"go.uber.org/zap"
-
-	"go.vixal.xyz/esp/platform/database"
+	"gorm.io/gorm"
 )
 
 func IsAuthenticated(session *session.Session, ctx *fiber.Ctx) (authenticated bool) {
@@ -37,7 +36,7 @@ func ShowLoginForm() fiber.Handler {
 	}
 }
 
-func PostLoginForm(hasher hashing.Driver, sess *session.Session, db *database.Database) fiber.Handler {
+func PostLoginForm(hasher hashing.Driver, sess *session.Session, db *gorm.DB) fiber.Handler {
 	return func(ctx *fiber.Ctx) error {
 		username := ctx.FormValue("username")
 		// Find user
@@ -82,7 +81,7 @@ func PostLoginForm(hasher hashing.Driver, sess *session.Session, db *database.Da
 	}
 }
 
-func PostLogoutForm(sessionLookup string, session *session.Session, db *database.Database) fiber.Handler {
+func PostLogoutForm(sessionLookup string, session *session.Session, db *gorm.DB) fiber.Handler {
 	return func(ctx *fiber.Ctx) error {
 		if IsAuthenticated(session, ctx) {
 			store := session.Get(ctx)

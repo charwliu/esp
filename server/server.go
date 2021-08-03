@@ -1,6 +1,9 @@
 package server
 
 import (
+	"context"
+	"fmt"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cache"
 	"github.com/gofiber/fiber/v2/middleware/compress"
@@ -16,209 +19,178 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/requestid"
 	"github.com/gofiber/session/v2"
 	hashing "github.com/thomasvvugt/fiber-hashing"
-	"go.uber.org/zap"
 
-	"go.vixal.xyz/esp/app/models"
-	configuration "go.vixal.xyz/esp/config"
+	"go.uber.org/zap"
+	"gorm.io/gorm"
+
+	configuration "go.vixal.xyz/esp/internal/config"
+	"go.vixal.xyz/esp/internal/entity"
+	"go.vixal.xyz/esp/internal/event"
 	"go.vixal.xyz/esp/pkg/middleware"
 	"go.vixal.xyz/esp/pkg/routes"
-	"go.vixal.xyz/esp/platform/database"
 )
 
 type App struct {
 	*fiber.App
 
-	DB      *database.Database
+	DB      *gorm.DB
 	Hasher  hashing.Driver
 	Session *session.Session
 }
 
 func Create(config *configuration.Config) (*App, error) {
 	app := &App{
-		App:     fiber.New(*config.GetFiberConfig()),
-		Hasher:  hashing.New(config.GetHasherConfig()),
-		Session: session.New(config.GetSessionConfig()),
+		App:     fiber.New(*config.FiberConfig()),
+		Hasher:  hashing.New(config.HasherConfig()),
+		Session: session.New(config.SessionConfig()),
 	}
 
 	app.registerMiddlewares(config)
 
-	// Initialize database
-	db, err := database.New(&database.Config{
-		Driver:   config.GetString("DB_DRIVER"),
-		Host:     config.GetString("DB_HOST"),
-		Username: config.GetString("DB_USERNAME"),
-		Password: config.GetString("DB_PASSWORD"),
-		Port:     config.GetInt("DB_PORT"),
-		Database: config.GetString("DB_DATABASE"),
-	})
+	app.DB = config.DB()
 
-	// Auto-migrate database models
-	if err != nil {
-		zap.S().Info("failed to connect to database: ", err.Error())
-	} else {
-		if db == nil {
-			zap.S().Info("failed to connect to database: db variable is nil")
-		} else {
-			app.DB = db
-			err := app.DB.AutoMigrate(&models.Role{})
-			if err != nil {
-				zap.S().Info("failed to auto-migrate role model:", err.Error())
-				return app, err
-			}
-			err = app.DB.AutoMigrate(&models.User{})
-			if err != nil {
-				zap.S().Info("failed to auto-migrate user model:", err.Error())
-				return app, err
-			}
-		}
-	}
 	// Register web routes
 	web := app.Group("")
-	routes.RegisterWeb(web, app.Session, config.GetString("SESSION_LOOKUP"), app.DB, app.Hasher)
+	routes.RegisterWeb(web, app.Session, config.SessionLookup(), app.DB, app.Hasher)
 
 	return app, nil
 }
 
 func (app *App) registerMiddlewares(config *configuration.Config) {
 	// Middleware - Custom Access Logger based on zap
-	if config.GetBool("MW_ACCESS_LOGGER_ENABLED") {
+	if config.AccessLoggerEnabled() {
 		app.Use(middleware.AccessLogger(&middleware.AccessLoggerConfig{
-			Type:        config.GetString("MW_ACCESS_LOGGER_TYPE"),
-			Environment: config.GetString("APP_ENV"),
-			Filename:    config.GetString("MW_ACCESS_LOGGER_FILENAME"),
-			MaxSize:     config.GetInt("MW_ACCESS_LOGGER_MAXSIZE"),
-			MaxAge:      config.GetInt("MW_ACCESS_LOGGER_MAXAGE"),
-			MaxBackups:  config.GetInt("MW_ACCESS_LOGGER_MAXBACKUPS"),
-			LocalTime:   config.GetBool("MW_ACCESS_LOGGER_LOCALTIME"),
-			Compress:    config.GetBool("MW_ACCESS_LOGGER_COMPRESS"),
+			Type:        config.AccessLoggerType(),
+			Environment: config.Environment(),
+			Filename:    config.AccessLoggerFilename(),
+			MaxSize:     config.AccessLoggerMaxsize(),
+			MaxAge:      config.AccessLoggerMaxAge(),
+			MaxBackups:  config.AccessLoggerMaxBackups(),
+			LocalTime:   config.AccessLoggerLocalTime(),
+			Compress:    config.AccessLoggerCompress(),
 		}))
 	}
 
 	// Middleware - Force HTTPS
-	if config.GetBool("MW_FORCE_HTTPS_ENABLED") {
+	if config.ForceHTTPS() {
 		app.Use(middleware.ForceHTTPS())
 	}
 
 	// Middleware - Force trailing slash
-	if config.GetBool("MW_FORCE_TRAILING_SLASH_ENABLED") {
+	if config.ForceTrailingSlash() {
 		app.Use(middleware.ForceTrailingSlash())
 	}
 
 	// Middleware - HSTS
-	if config.GetBool("MW_HSTS_ENABLED") {
+	if config.HSTSEnabled() {
 		app.Use(middleware.HSTS(&middleware.HSTSConfig{
-			MaxAge:            config.GetInt("MW_HSTS_MAXAGE"),
-			IncludeSubdomains: config.GetBool("MW_HSTS_INCLUDESUBDOMAINS"),
-			Preload:           config.GetBool("MW_HSTS_PRELOAD"),
+			MaxAge:            config.HSTSMaxAge(),
+			IncludeSubdomains: config.HSTSIncludeSubdomains(),
+			Preload:           config.HSTSPreload(),
 		}))
 	}
 
 	// Middleware - Suppress WWW
-	if config.GetBool("MW_SUPPRESS_WWW_ENABLED") {
+	if config.SuppressWWW() {
 		app.Use(middleware.SuppressWWW())
 	}
 
 	// Middleware - Recover
-	if config.GetBool("MW_FIBER_RECOVER_ENABLED") {
-		app.Use(recover.New())
-	}
-
-	// Middleware - Recover
-	if config.GetBool("MW_FIBER_RECOVER_ENABLED") {
+	if config.FiberRecoverEnabled() {
 		app.Use(recover.New())
 	}
 
 	// TODO: Middleware - Basic Authentication
 
 	// Middleware - Cache
-	if config.GetBool("MW_FIBER_CACHE_ENABLED") {
+	if config.FiberCacheEnabled() {
 		app.Use(cache.New(cache.Config{
-			Expiration:   config.GetDuration("MW_FIBER_CACHE_EXPIRATION"),
-			CacheControl: config.GetBool("MW_FIBER_CACHE_CACHECONTROL"),
+			Expiration:   config.FiberCacheExpiration(),
+			CacheControl: config.FiberCacheCacheControl(),
 		}))
 	}
 
 	// Middleware - Compress
-	if config.GetBool("MW_FIBER_COMPRESS_ENABLED") {
-		lvl := compress.Level(config.GetInt("MW_FIBER_COMPRESS_LEVEL"))
+	if config.FiberCompressEnabled() {
+		lvl := compress.Level(config.FiberCompressLevel())
 		app.Use(compress.New(compress.Config{
 			Level: lvl,
 		}))
 	}
 
 	// Middleware - CORS
-	if config.GetBool("MW_FIBER_CORS_ENABLED") {
+	if config.FiberCORSEnabled() {
 		app.Use(cors.New(cors.Config{
-			AllowOrigins:     config.GetString("MW_FIBER_CORS_ALLOWORIGINS"),
-			AllowMethods:     config.GetString("MW_FIBER_CORS_ALLOWMETHODS"),
-			AllowHeaders:     config.GetString("MW_FIBER_CORS_ALLOWHEADERS"),
-			AllowCredentials: config.GetBool("MW_FIBER_CORS_ALLOWCREDENTIALS"),
-			ExposeHeaders:    config.GetString("MW_FIBER_CORS_EXPOSEHEADERS"),
-			MaxAge:           config.GetInt("MW_FIBER_CORS_MAXAGE"),
+			AllowOrigins:     config.FiberCORSAllowOrigins(),
+			AllowMethods:     config.FiberCORSAllowMethods(),
+			AllowHeaders:     config.FiberCORSAllowHeaders(),
+			AllowCredentials: config.FiberCORSAllowCredentials(),
+			ExposeHeaders:    config.FiberCORSExposeHeaders(),
+			MaxAge:           config.FiberCORSMaxAge(),
 		}))
 	}
 
 	// Middleware - CSRF
-	if config.GetBool("MW_FIBER_CSRF_ENABLED") {
+	if config.FiberCSRFEnabled() {
 		app.Use(csrf.New(csrf.Config{
-			KeyLookup:      config.GetString("MW_FIBER_CSRF_KEYLOOKUP"),
-			CookieName:     config.GetString("MW_FIBER_CSRF_COOKIE_NAME"),
-			CookieSameSite: config.GetString("MW_FIBER_CSRF_COOKIE_SAMESITE"),
-			Expiration:     config.GetDuration("MW_FIBER_CSRF_COOKIE_EXPIRES"),
-			ContextKey:     config.GetString("MW_FIBER_CSRF_CONTEXTKEY"),
+			KeyLookup:      config.FiberCSRFKeyLookup(),
+			CookieName:     config.FiberCSRFCookieName(),
+			CookieSameSite: config.FiberCSRFCookieSameSite(),
+			Expiration:     config.FiberCSRFExpiration(),
+			ContextKey:     config.FiberCSRFContextKey(),
 		}))
 	}
 
 	// Middleware - ETag
-	if config.GetBool("MW_FIBER_ETAG_ENABLED") {
+	if config.FiberETagEnabled() {
 		app.Use(etag.New(etag.Config{
-			Weak: config.GetBool("MW_FIBER_ETAG_WEAK"),
+			Weak: config.FiberETagWeak(),
 		}))
 	}
 
 	// Middleware - Expvar
-	if config.GetBool("MW_FIBER_EXPVAR_ENABLED") {
+	if config.FiberExpvarEnabled() {
 		app.Use(expvar.New())
 	}
 
 	// Middleware - Favicon
-	if config.GetBool("MW_FIBER_FAVICON_ENABLED") {
+	if config.FiberFaviconEnabled() {
 		app.Use(favicon.New(favicon.Config{
-			File:         config.GetString("MW_FIBER_FAVICON_FILE"),
-			CacheControl: config.GetString("MW_FIBER_FAVICON_CACHECONTROL"),
+			File:         config.FiberFaviconFile(),
+			CacheControl: config.FiberFaviconCacheControl(),
 		}))
 	}
 
 	// TODO: Middleware - Filesystem
 
 	// Middleware - Limiter
-	if config.GetBool("MW_FIBER_LIMITER_ENABLED") {
+	if config.FiberLimiterEnabled() {
 		app.Use(limiter.New(limiter.Config{
-			Max:        config.GetInt("MW_FIBER_LIMITER_MAX"),
-			Expiration: config.GetDuration("MW_FIBER_LIMITER_EXPIRATION"),
+			Max:        config.FiberLimiterMax(),
+			Expiration: config.FiberLimiterExpiration(),
 			// TODO: Key
 			// TODO: LimitReached
 		}))
 	}
 
 	// Middleware - Monitor
-	if config.GetBool("MW_FIBER_MONITOR_ENABLED") {
+	if config.FiberMonitorEnabled() {
 		app.Use(monitor.New())
 	}
 
 	// Middleware - Pprof
-	if config.GetBool("MW_FIBER_PPROF_ENABLED") {
+	if config.FiberPprofEnabled() {
 		app.Use(pprof.New())
 	}
 
 	// TODO: Middleware - Proxy
 
 	// Middleware - RequestID
-	if config.GetBool("MW_FIBER_REQUESTID_ENABLED") {
+	if config.FiberRequestIDEnabled() {
 		app.Use(requestid.New(requestid.Config{
-			Header: config.GetString("MW_FIBER_REQUESTID_HEADER"),
+			Header: config.FiberRequestIDHeader(),
 			// TODO: Generator
-			ContextKey: config.GetString("MW_FIBER_REQUESTID_CONTEXTKEY"),
+			ContextKey: config.FiberRequestIDContextKey(),
 		}))
 	}
 
@@ -229,3 +201,52 @@ func (app *App) registerMiddlewares(config *configuration.Config) {
 func (app *App) Exit() {
 	_ = app.Shutdown()
 }
+
+func Start(ctx context.Context, config *configuration.Config) {
+	//defer func() {
+	//	if err := recover(); err != nil {
+	//		log.Error(err)
+	//	}
+	//}()
+
+	app := &App{
+		App:     fiber.New(*config.FiberConfig()),
+		Hasher:  hashing.New(config.HasherConfig()),
+		Session: session.New(config.SessionConfig()),
+	}
+
+	app.registerMiddlewares(config)
+
+	// Register web routes
+	web := app.Group("")
+	routes.RegisterWeb(web, app.Session, config.SessionLookup(), entity.DB(), app.Hasher)
+
+	// Register application API routes (using the /api/v1 group)
+	api := app.Group("/api")
+	apiv1 := api.Group("/v1")
+	routes.RegisterAPI(apiv1, entity.DB())
+
+	// Register static routes for the public directory
+	app.Static("/", config.AssetsPath())
+
+	// Custom 404 Handler
+	app.Use(func(c *fiber.Ctx) error {
+		if err := c.SendStatus(fiber.StatusNotFound); err != nil {
+			panic(err)
+		}
+		if err := c.Render("errors/404", fiber.Map{}); err != nil {
+			return c.Status(fiber.StatusInternalServerError).SendString(err.Error())
+		}
+		return nil
+	})
+
+	// Start listening on the specified address
+	err := app.Listen(fmt.Sprintf("%s:%d", config.HttpHost(), config.HttpPort()))
+	if err != nil {
+		log.Error("Starting listening on the specified address", zap.Error(err))
+		return
+	}
+
+}
+
+var log = event.Log.Sugar()

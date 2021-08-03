@@ -3,91 +3,49 @@ package main
 import (
 	"fmt"
 	"os"
-	"os/signal"
 	"path/filepath"
-	"syscall"
 
-	"github.com/gofiber/fiber/v2"
+	"github.com/urfave/cli/v2"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"gopkg.in/natefinch/lumberjack.v2"
 
-	configuration "go.vixal.xyz/esp/config"
-	_ "go.vixal.xyz/esp/docs" // load API Docs files (Swagger)
-	"go.vixal.xyz/esp/pkg/routes"
-	"go.vixal.xyz/esp/server"
-
-	_ "github.com/joho/godotenv/autoload" // load .env file automatically
+	"go.vixal.xyz/esp/internal/commands"
+	"go.vixal.xyz/esp/internal/config"
+	"go.vixal.xyz/esp/internal/event"
 )
 
-// @title API
-// @version 1.0
-// @description ESP API Docs.
-// @termsOfService http://swagger.io/terms/
-// @contact.name API Support
-// @contact.email charwliu@ngboss.com
-// @license.name Apache 2.0
-// @license.url http://www.apache.org/licenses/LICENSE-2.0.html
-// @securityDefinitions.apikey ApiKeyAuth
-// @in header
-// @name Authorization
-// @BasePath /api
+var version = "development"
+var log = event.Log
+
 func main() {
-	config := configuration.New()
-
-	logger, undo := configureLogger(config)
-
-	defer func() { undo() }()
-
-	// Server initialization
-	app, err := server.Create(config)
-
-	if err != nil {
-		logger.Error("%s", zap.Error(err))
-		return
+	app := &cli.App{
+		Name:                 "Esp",
+		Usage:                "E-Service platform",
+		Version:              version,
+		Copyright:            "© 2021 Charlie W. Liu <charwliu@gmail.com>",
+		EnableBashCompletion: true,
+		Flags:                config.GlobalFlags,
 	}
 
-	// Register web routes
-	web := app.Group("")
-	routes.RegisterWeb(web, app.Session, config.GetString("SESSION_LOOKUP"), app.DB, app.Hasher)
+	app.Commands = []*cli.Command{
+		commands.StartCommand,
+		commands.StopCommand,
+		commands.ConfigCommand,
+		commands.StatusCommand,
+		commands.PasswdCommand,
+		commands.MigrateCommand,
+		commands.VersionCommand,
+	}
 
-	// Register application API routes (using the /api/v1 group)
-	api := app.Group("/api")
-	apiv1 := api.Group("/v1")
-	routes.RegisterAPI(apiv1, app.DB)
-
-	// Register static routes for the public directory
-	app.Static("/", "./public")
-
-	// Custom 404 Handler
-	app.Use(func(c *fiber.Ctx) error {
-		if err := c.SendStatus(fiber.StatusNotFound); err != nil {
-			panic(err)
-		}
-		if err := c.Render("errors/404", fiber.Map{}); err != nil {
-			return c.Status(fiber.StatusInternalServerError).SendString(err.Error())
-		}
-		return err
-	})
-
-	// Close any connections on interrupt signal
-	c := make(chan os.Signal, 1)
-	signal.Notify(c, syscall.SIGTERM, syscall.SIGHUP, syscall.SIGQUIT, syscall.SIGUSR1, syscall.SIGUSR2)
-	go func() {
-		<-c
-		app.Exit()
-	}()
-
-	// Start listening on the specified address
-	err = app.Listen(config.GetString("APP_ADDR"))
+	err := app.Run(os.Args)
 	if err != nil {
-		logger.Error("Starting listening on the specified address", zap.Error(err))
-		app.Exit()
+		log.Error(err.Error())
 	}
 }
 
-func configureLogger(config *configuration.Config) (*zap.Logger, func()) {
-	ls := config.GetLoggerConfig()
+func configureLogger(config *config.Config) (*zap.Logger, func()) {
+	ls := config.LoggerConfig()
 	highPriority := zap.LevelEnablerFunc(func(lvl zapcore.Level) bool {
 		return lvl >= zapcore.InfoLevel
 	})
@@ -131,7 +89,7 @@ func configureLogger(config *configuration.Config) (*zap.Logger, func()) {
 	var core zapcore.Core
 	var writerSyncer zapcore.WriteSyncer
 	if ls.Filename != "" {
-		logFilePath := filepath.Join(config.GetString("APP_WORKDIR"), ls.Filename)
+		logFilePath := filepath.Join(config.StoragePath(), ls.Filename)
 		if filepath.IsAbs(ls.Filename) {
 			logFilePath = ls.Filename
 		}
@@ -155,10 +113,12 @@ func configureLogger(config *configuration.Config) (*zap.Logger, func()) {
 			zapcore.NewCore(encoder, consoleDebugging, lowPriority),
 		)
 	}
+	zapcore.RegisterHooks(core, event.NewHook(event.SharedHub()).Fire)
 	logger := zap.New(core, zap.AddCaller())
 	undoGlobals := zap.ReplaceGlobals(logger)
 	undoStd := zap.RedirectStdLog(logger)
 
+	event.Log = logger.WithOptions(zap.AddCallerSkip(1))
 	return logger, func() {
 		undoStd()
 		undoGlobals()

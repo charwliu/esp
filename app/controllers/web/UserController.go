@@ -4,29 +4,29 @@ import (
 	"errors"
 
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 
 	"go.vixal.xyz/esp/app/models"
-	"go.vixal.xyz/esp/platform/database"
 )
 
 var zero uuid.UUID
 
 // FindUserByUsername Return a single user as JSON
-func FindUserByUsername(db *database.Database, username string) (*models.User, error) {
+func FindUserByUsername(db *gorm.DB, username string) (*models.User, error) {
 	User := new(models.User)
 	if response := db.Where("name = ?", username).First(&User); response.Error != nil {
 		return nil, response.Error
 	}
-	if User.ID == zero {
+	if User.ID == nil {
 		return User, errors.New("user not found")
 	}
 	// Match role to user
-	if User.RoleID != zero {
+	if User.RoleID != nil {
 		Role := new(models.Role)
 		if res := db.Find(&Role, "id = ?", User.RoleID); res.Error != nil {
 			return User, errors.New("error when retrieving the role of the user")
 		}
-		if Role.ID != zero {
+		if Role.ID != nil {
 			User.Role = *Role
 		}
 	}
@@ -34,21 +34,21 @@ func FindUserByUsername(db *database.Database, username string) (*models.User, e
 }
 
 // FindUserByID Return a single user as JSON
-func FindUserByID(db *database.Database, id int64) (*models.User, error) {
+func FindUserByID(db *gorm.DB, id int64) (*models.User, error) {
 	User := new(models.User)
 	if response := db.Where("id = ?", id).First(&User); response.Error != nil {
 		return nil, response.Error
 	}
-	if User.ID == zero {
+	if User.ID == nil {
 		return User, errors.New("user not found")
 	}
 	// Match role to user
-	if User.RoleID != zero {
+	if User.RoleID != nil {
 		Role := new(models.Role)
 		if res := db.Find(&Role, "id = ?", User.RoleID); res.Error != nil {
 			return User, errors.New("error when retrieving the role of the user")
 		}
-		if Role.ID != zero {
+		if Role.ID != nil {
 			User.Role = *Role
 		}
 	}

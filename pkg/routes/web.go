@@ -6,12 +6,12 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/session/v2"
 	hashing "github.com/thomasvvugt/fiber-hashing"
+	"gorm.io/gorm"
 
 	Controller "go.vixal.xyz/esp/app/controllers/web"
-	"go.vixal.xyz/esp/platform/database"
 )
 
-func RegisterWeb(web fiber.Router, session *session.Session, sessionLookup string, db *database.Database, hasher hashing.Driver) {
+func RegisterWeb(web fiber.Router, session *session.Session, sessionLookup string, db *gorm.DB, hasher hashing.Driver) {
 	// Homepage
 	web.Get("/", Controller.Index(session, db))
 

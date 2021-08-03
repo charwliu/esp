@@ -6,11 +6,10 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/session/v2"
 	"go.uber.org/zap"
-
-	"go.vixal.xyz/esp/platform/database"
+	"gorm.io/gorm"
 )
 
-func Index(sess *session.Session, db *database.Database) fiber.Handler {
+func Index(sess *session.Session, db *gorm.DB) fiber.Handler {
 	return func(ctx *fiber.Ctx) error {
 		auth := IsAuthenticated(sess, ctx)
 

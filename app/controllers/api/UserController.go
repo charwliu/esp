@@ -4,16 +4,16 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
+	"gorm.io/gorm"
 
 	"go.vixal.xyz/esp/app/models"
 	"go.vixal.xyz/esp/pkg/httperror"
-	"go.vixal.xyz/esp/platform/database"
 )
 
 var zero uuid.UUID
 
 // GetAllUsers Return all users as JSON
-func GetAllUsers(db *database.Database) fiber.Handler {
+func GetAllUsers(db *gorm.DB) fiber.Handler {
 	return func(ctx *fiber.Ctx) error {
 		var Users []models.User
 		if response := db.Find(&Users); response.Error != nil {
@@ -22,12 +22,12 @@ func GetAllUsers(db *database.Database) fiber.Handler {
 		}
 		// Match roles to users
 		for index, User := range Users {
-			if User.RoleID != zero {
+			if User.RoleID != nil {
 				Role := new(models.Role)
 				if response := db.Find(&Role, "id = ?", User.RoleID); response.Error != nil {
 					zap.L().Error("An error occurred when retrieving the role: " + response.Error.Error())
 				}
-				if Role.ID != zero {
+				if Role.ID != nil {
 					Users[index].Role = *Role
 				}
 			}
@@ -41,7 +41,7 @@ func GetAllUsers(db *database.Database) fiber.Handler {
 }
 
 // GetUser Return a single user as JSON
-func GetUser(db *database.Database) fiber.Handler {
+func GetUser(db *gorm.DB) fiber.Handler {
 	return func(ctx *fiber.Ctx) error {
 		User := new(models.User)
 		id := ctx.Params("id")
@@ -49,7 +49,7 @@ func GetUser(db *database.Database) fiber.Handler {
 			zap.L().Error("An error occurred when retrieving the user: " + response.Error.Error())
 			return response.Error
 		}
-		if User.ID == zero {
+		if User.ID == nil {
 			err := ctx.SendStatus(fiber.StatusNotFound)
 			if err != nil {
 				zap.L().Error("Cannot return status not found: " + err.Error())
@@ -63,12 +63,12 @@ func GetUser(db *database.Database) fiber.Handler {
 			return err
 		}
 		// Match role to user
-		if User.RoleID != zero {
+		if User.RoleID != nil {
 			Role := new(models.Role)
 			if response := db.Find(&Role, User.RoleID); response.Error != nil {
 				zap.L().Error("An error occurred when retrieving the role: " + response.Error.Error())
 			}
-			if Role.ID != zero {
+			if Role.ID != nil {
 				User.Role = *Role
 			}
 		}
@@ -81,25 +81,33 @@ func GetUser(db *database.Database) fiber.Handler {
 }
 
 // AddUser Add a single user to the database
-func AddUser(db *database.Database) fiber.Handler {
+func AddUser(db *gorm.DB) fiber.Handler {
 	return func(ctx *fiber.Ctx) error {
 		User := new(models.User)
 		if err := ctx.BodyParser(User); err != nil {
 			zap.L().Error("An error occurred when parsing the new user: " + err.Error())
 			return err
 		}
+		if User.RoleID == nil {
+			if User.Role.Name != "" {
+				Role := new(models.Role)
+				if response := db.Find(&Role, "name = ?", User.Role.Name); response.Error == nil {
+					User.Role = *Role
+				}
+			}
+		}
 		if response := db.Create(&User); response.Error != nil {
 			zap.L().Error("An error occurred when storing the new user: " + response.Error.Error())
 			return httperror.Unexpected(response.Error.Error())
 		}
 		// Match role to user
-		if User.RoleID != zero {
+		if User.RoleID != nil {
 			Role := new(models.Role)
 			if response := db.Find(&Role, "id = ?", User.RoleID); response.Error != nil {
 				zap.L().Error("An error occurred when retrieving the role" + response.Error.Error())
 				return response.Error
 			}
-			if Role.ID != zero {
+			if Role.ID != nil {
 				User.Role = *Role
 			}
 		}
@@ -112,7 +120,7 @@ func AddUser(db *database.Database) fiber.Handler {
 }
 
 // EditUser Edit a single user
-func EditUser(db *database.Database) fiber.Handler {
+func EditUser(db *gorm.DB) fiber.Handler {
 	return func(ctx *fiber.Ctx) error {
 		id := ctx.Params("id")
 		EditUser := new(models.User)
@@ -124,7 +132,7 @@ func EditUser(db *database.Database) fiber.Handler {
 			zap.L().Error("An error occurred when retrieving the existing user: " + response.Error.Error())
 		}
 		// User does not exist
-		if User.ID == zero {
+		if User.ID == nil {
 			err := ctx.SendStatus(fiber.StatusNotFound)
 			if err != nil {
 				zap.L().Error("Cannot return status not found: " + err.Error())
@@ -141,12 +149,12 @@ func EditUser(db *database.Database) fiber.Handler {
 		User.Email = EditUser.Email
 		User.RoleID = EditUser.RoleID
 		// Match role to user
-		if User.RoleID != zero {
+		if User.RoleID != nil {
 			Role := new(models.Role)
 			if response := db.Find(&Role, "id = ?", User.RoleID); response.Error != nil {
 				zap.L().Error("An error occurred when retrieving the role" + response.Error.Error())
 			}
-			if Role.ID != zero {
+			if Role.ID != nil {
 				User.Role = *Role
 			}
 		}
@@ -162,7 +170,7 @@ func EditUser(db *database.Database) fiber.Handler {
 }
 
 // DeleteUser Delete a single user
-func DeleteUser(db *database.Database) fiber.Handler {
+func DeleteUser(db *gorm.DB) fiber.Handler {
 	return func(ctx *fiber.Ctx) error {
 		id := ctx.Params("id")
 		var User models.User

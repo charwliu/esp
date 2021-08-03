@@ -3,14 +3,14 @@ package api
 import (
 	"github.com/gofiber/fiber/v2"
 	"go.uber.org/zap"
+	"gorm.io/gorm"
 
 	"go.vixal.xyz/esp/app/models"
 	"go.vixal.xyz/esp/pkg/httperror"
-	"go.vixal.xyz/esp/platform/database"
 )
 
 // GetAllRoles Return all roles as JSON
-func GetAllRoles(db *database.Database) fiber.Handler {
+func GetAllRoles(db *gorm.DB) fiber.Handler {
 	return func(ctx *fiber.Ctx) error {
 		var Role []models.Role
 		if response := db.Find(&Role); response.Error != nil {
@@ -26,7 +26,7 @@ func GetAllRoles(db *database.Database) fiber.Handler {
 }
 
 // GetRole Return a single role as JSON
-func GetRole(db *database.Database) fiber.Handler {
+func GetRole(db *gorm.DB) fiber.Handler {
 	return func(ctx *fiber.Ctx) error {
 		Role := new(models.Role)
 		id := ctx.Params("id")
@@ -34,7 +34,7 @@ func GetRole(db *database.Database) fiber.Handler {
 			zap.L().Error("An error occurred when retrieving the role: " + response.Error.Error())
 			return ctx.Status(fiber.StatusInternalServerError).JSON(httperror.Unexpected(response.Error.Error()))
 		}
-		if Role.ID == zero {
+		if Role.ID == nil {
 			// Send status not found
 			err := ctx.SendStatus(fiber.StatusNotFound)
 			if err != nil {
@@ -59,7 +59,7 @@ func GetRole(db *database.Database) fiber.Handler {
 }
 
 // AddRole Add a single role to the database
-func AddRole(db *database.Database) fiber.Handler {
+func AddRole(db *gorm.DB) fiber.Handler {
 	return func(ctx *fiber.Ctx) error {
 		Role := new(models.Role)
 		if err := ctx.BodyParser(Role); err != nil {
@@ -79,7 +79,7 @@ func AddRole(db *database.Database) fiber.Handler {
 }
 
 // EditRole Edit a single role
-func EditRole(db *database.Database) fiber.Handler {
+func EditRole(db *gorm.DB) fiber.Handler {
 	return func(ctx *fiber.Ctx) error {
 		id := ctx.Params("id")
 		EditRole := new(models.Role)
@@ -92,7 +92,7 @@ func EditRole(db *database.Database) fiber.Handler {
 			return response.Error
 		}
 		// Role does not exist
-		if Role.ID == zero {
+		if Role.ID == nil {
 			err := ctx.SendStatus(fiber.StatusNotFound)
 			if err != nil {
 				zap.L().Error("Cannot return status not found: " + err.Error())
@@ -119,7 +119,7 @@ func EditRole(db *database.Database) fiber.Handler {
 }
 
 // DeleteRole Delete a single role
-func DeleteRole(db *database.Database) fiber.Handler {
+func DeleteRole(db *gorm.DB) fiber.Handler {
 	return func(ctx *fiber.Ctx) error {
 		id := ctx.Params("id")
 		var Role models.Role
