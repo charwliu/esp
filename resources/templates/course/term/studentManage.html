@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org" xmlns:shiro="http://www.pollix.at/thymeleaf/shiro">
+<head>
+	<th:block th:include="include :: header('学员管理')" />
+	<th:block th:include="include :: layout-latest-css" />
+</head>
+<body class="gray-bg">
+	<div class="container-div">
+		<div class="row">
+			<div class="col-sm-12 search-collapse">
+				<form id="role-form">
+				    <input type="hidden" id="termId" name="termId" th:value="${termId}">
+					<div class="select-list">
+						<ul>
+							<li>
+								登录名称：<input type="text" name="loginName"/>
+							</li>
+							<li>
+								手机号码：<input type="text" name="phonenumber"/>
+							</li>
+							<li>
+								<a class="btn btn-primary btn-rounded btn-sm" onclick="$.table.search()"><i class="fa fa-search"></i>&nbsp;搜索</a>
+							    <a class="btn btn-warning btn-rounded btn-sm" onclick="$.form.reset()"><i class="fa fa-refresh"></i>&nbsp;重置</a>
+							</li>
+						</ul>
+					</div>
+				</form>
+			</div>
+	        
+	        <div class="btn-group-sm" id="toolbar" role="group">
+				<a class="btn btn-success" onclick="selectUser()">
+	                <i class="fa fa-plus"></i> 添加学员
+	            </a>
+				<a class="btn btn-danger btn-del disabled" onclick="deleteUserAll()">
+					<i class="fa fa-remove"></i> 删除
+				</a>
+		        <a class="btn btn-warning" onclick="closeItem()">
+		            <i class="fa fa-reply-all"></i> 关闭
+		        </a>
+	        </div>
+	        
+	        <div class="col-sm-12 select-table table-striped">
+			    <table id="bootstrap-table" data-mobile-responsive="true"></table>
+			</div>
+		</div>
+	</div>
+	<th:block th:include="include :: footer" />
+	<script th:inline="javascript">
+		var prefix = ctx + "course/term";
+		var termId = $("#termId").val();
+		$(function() {
+			var options = {
+		        url: prefix + "/studentList/"+termId,
+		        queryParams: queryParams,
+		        modalName: "用户",
+		        columns: [{
+		            checkbox: true
+		        },
+				{
+					field: 'userId',
+					title: '用户ID',
+					visible: false,
+				},
+		        {
+		            field: 'loginName',
+		            title: '登录名称',
+                    align: 'center'
+		        },
+		        {
+		            field: 'userName',
+		            title: '用户名称',
+                    align: 'center'
+		        },
+				{
+					field: 'dept.deptName',
+                    align: 'center',
+					title: '部门'
+				},
+				{
+					field: 'jobLevel',
+                    align: 'center',
+					title: '职级'
+				},
+		        {
+		            field: 'phonenumber',
+                    align: 'center',
+		            title: '手机'
+		        },
+				{
+                    field: 'status',
+					title: '用户状态',
+					align: 'center',
+					formatter: function (value, row, index) {
+						return statusTools(value, row);
+					}
+				},
+		        {
+		            field: 'createTime',
+		            title: '创建时间',
+                    align: 'center'
+		        },
+		        {
+		            title: '操作',
+		            align: 'center',
+		            formatter: function(value, row, index) {
+		                var actions = [];
+		                actions.push('<a class="btn btn-danger btn-xs" href="#" onclick="deleteUser(\'' + row.userId + '\')"><i class="fa fa-remove"></i>删除</a> ');
+		                return actions.join('');
+		            }
+		        }]
+		    };
+		    $.table.init(options);
+		});
+
+		function queryParams(params) {
+			return {
+                termId:         $("#termId").val(),
+				pageSize:       params.limit,
+    			pageNum:        params.offset / params.limit + 1,
+    			searchValue:    params.search,
+    			orderByColumn:  params.sort,
+    			isAsc:          params.order
+			};
+		}
+
+        /* 用户状态显示 */
+        function statusTools(value, row) {
+            if (value == 1) {
+                return '<i class=\"fa fa-toggle-off text-info fa-2x\" onclick="enable(\'' + row.userId + '\')"></i> ';
+            } else {
+                return '<i class=\"fa fa-toggle-on text-info fa-2x\" onclick="disable(\'' + row.userId + '\')"></i> ';
+            }
+        }
+
+        /* 学员停用 */
+        function disable(userId) {
+            $.modal.confirm("确认要停用用户吗？", function() {
+                $.operate.post(prefix + "/changeStatus", { "userId": userId, "status": 1 ,"deptId":termId});
+            })
+        }
+
+        /* 学员启用 */
+        function enable(userId) {
+            $.modal.confirm("确认要启用用户吗？", function() {
+                $.operate.post(prefix + "/changeStatus", { "userId": userId, "status": 0 ,"deptId":termId});
+            })
+        }
+
+		/* 分配用户-选择用户 */
+		function selectUser() {
+			var url = prefix + '/selectOptionTermUser/'+termId;
+		    $.modal.open("添加学员", url, '980', '470');
+		}
+
+		/* 批量删除班级用户 */
+		function deleteUserAll() {
+		    var rows = $.table.selectFirstColumns();
+       		if (rows.length == 0) {
+       			$.modal.alertWarning("请至少选择一条记录");
+       			return;
+       		}
+       		$.modal.confirm("确认要删除选中的" + rows.length + "条数据吗?", function() {
+    			var data = { "termId": termId, "userIds": rows.join() };
+    			$.operate.submit(prefix + "/deleteTermUserAll", "post", "json", data);
+    		});
+		}
+
+		function deleteUser(userId) {
+			$.modal.confirm("确认从班级中删除该用户吗？", function() {
+				$.operate.post(prefix + "/deleteTermUser", {"userId": userId, "deptId":termId});
+		    })
+		}
+	</script>
+</body>
+</html>

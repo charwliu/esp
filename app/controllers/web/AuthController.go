@@ -4,16 +4,19 @@ import (
 	"strings"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/session/v2"
+	"github.com/gofiber/fiber/v2/middleware/session"
 	hashing "github.com/thomasvvugt/fiber-hashing"
 	"go.uber.org/zap"
 	"gorm.io/gorm"
 )
 
-func IsAuthenticated(session *session.Session, ctx *fiber.Ctx) (authenticated bool) {
-	store := session.Get(ctx)
+func IsAuthenticated(store *session.Store, ctx *fiber.Ctx) (authenticated bool) {
+	sess, err := store.Get(ctx)
+	if err != nil {
+		panic(err)
+	}
 	// Get User ID from session store
-	userID, correct := store.Get("userid").(int64)
+	userID, correct := sess.Get("userid").(int64)
 	if !correct {
 		userID = 0
 	}
@@ -36,7 +39,7 @@ func ShowLoginForm() fiber.Handler {
 	}
 }
 
-func PostLoginForm(hasher hashing.Driver, sess *session.Session, db *gorm.DB) fiber.Handler {
+func PostLoginForm(hasher hashing.Driver, store *session.Store, db *gorm.DB) fiber.Handler {
 	return func(ctx *fiber.Ctx) error {
 		username := ctx.FormValue("username")
 		// Find user
@@ -56,16 +59,20 @@ func PostLoginForm(hasher hashing.Driver, sess *session.Session, db *gorm.DB) fi
 				zap.S().Errorf("Error when matching hash for password: %v", err)
 			}
 			if match {
-				store := sess.Get(ctx)
-				defer func(store *session.Store) {
-					err := store.Save()
+				sess, err := store.Get(ctx)
+				if err != nil {
+					panic(err)
+				}
+				defer func(sess *session.Session) {
+					err := sess.Save()
 					if err != nil {
-						return
+						panic(err)
 					}
-				}(store)
-				// Set the user ID in the sess store
-				store.Set("userid", user.ID)
-				zap.L().Info("User set in sess store with", zap.Stringer("ID", user.ID))
+				}(sess)
+
+				// Set the user ID in the session
+				sess.Set("userid", user.ID)
+				zap.L().Info("User set in store store with", zap.Stringer("ID", user.ID))
 				if err := ctx.SendString("You should be logged in successfully!"); err != nil {
 					zap.L().Error(err.Error())
 				}
@@ -81,12 +88,15 @@ func PostLoginForm(hasher hashing.Driver, sess *session.Session, db *gorm.DB) fi
 	}
 }
 
-func PostLogoutForm(sessionLookup string, session *session.Session, db *gorm.DB) fiber.Handler {
+func PostLogoutForm(sessionLookup string, store *session.Store, db *gorm.DB) fiber.Handler {
 	return func(ctx *fiber.Ctx) error {
-		if IsAuthenticated(session, ctx) {
-			store := session.Get(ctx)
-			store.Delete("userid")
-			if err := store.Save(); err != nil {
+		if IsAuthenticated(store, ctx) {
+			sess, err := store.Get(ctx)
+			if err != nil {
+				panic(err)
+			}
+			sess.Delete("userid")
+			if err := sess.Save(); err != nil {
 				zap.L().Error(err.Error())
 			}
 			// Check if cookie needs to be unset

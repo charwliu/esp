@@ -1,0 +1,97 @@
+<!DOCTYPE HTML>
+<html  lang="zh" xmlns:th="http://www.thymeleaf.org">
+<meta charset="utf-8">
+<head>
+	<th:block th:include="include :: header('添加设计题')" />
+	<th:block th:include="course/summernote :: header" />
+</head>
+<body class="white-bg">
+    <div class="wrapper wrapper-content animated fadeInRight ibox-content">
+        <form class="form-horizontal m" id="form-design-add">
+			<th:block th:include="course/summernote :: form-input" />
+			<div class="form-group">	
+				<label class="col-sm-2 control-label">题目：</label>
+				<div class="col-sm-9">
+					<input id="designQuestion" name="designQuestion" type="hidden">
+					<div id="questionNote" class="summernote"></div>
+					<label class="label-error"><i class="fa fa-times-circle"></i>&nbsp;必填</label>
+				</div>
+			</div>
+			<div class="form-group">	
+				<label class="col-sm-2 control-label">参考导图：</label>
+				<div class="col-sm-9">
+					<input id="designAnswer" name="designAnswer" type="hidden">
+					<div id="answerNote" class="summernote"></div>
+				</div>
+			</div>
+			<!--<div class="form-group">
+				<label for="designLabel" class="col-sm-2 control-label">标签：</label>
+				<div class="col-sm-9">
+					<select id="designLabel" name="designLabel" class="form-control m-b" th:with="type=${@dict.getType('course_sub_label')}">
+						<option th:each="dict : ${type}" th:text="${dict.dictLabel}" th:value="${dict.dictValue}"></option>
+					</select>
+				</div>
+			</div>-->
+			<div class="form-group">	
+				<label class="col-sm-2 control-label">详解：</label>
+				<div class="col-sm-9">
+					<input id="designExplain" name="designExplain" type="hidden">
+					<div id="explainNote" class="summernote"></div>
+				</div>
+			</div>
+			<div class="form-group">	
+				<label class="col-sm-2 control-label">状态：</label>
+				<div class="col-sm-9">
+					<div class="radio-box" th:each="dict : ${@dict.getType('sys_normal_disable')}">
+						<input type="radio" th:id="${dict.dictCode}" name="designStatus" th:value="${dict.dictValue}" th:checked="${dict.isDefault == 'Y' ? true : false}">
+						<label th:for="${dict.dictCode}" th:text="${dict.dictLabel}"></label>
+					</div>
+				</div>
+			</div>
+		</form>
+	</div>
+    <th:block th:include="include :: footer" />
+	<th:block th:include="course/summernote :: footer(100)" />
+	<th:block th:include="course/summernote :: form-value" />
+    <script type="text/javascript">
+		var prefix = ctx + "course/design";
+		var $answerNote = $("#answerNote");
+		$answerNote.summernote('destroy');
+		$answerNote.summernote({
+			lang : 'zh-CN',
+			toolbar: [
+				['insert', ['picture']],
+				['misc', ['fullscreen']]
+			],
+			callbacks: {
+				onImageUpload: function (files) {
+					sendFile(files[0], this);
+				}
+			}
+		});
+
+		$("#form-design-add").validate({
+			onkeyup: false,
+			focusCleanup: true
+		});
+
+		function submitHandler() {
+			var $questionNote = $("#questionNote");
+			var isQuestion = $questionNote.summernote('isEmpty');
+			if(isQuestion){
+				$(".label-error", $questionNote.parent('div')).show();
+			}else {
+				$("#designQuestion").val($questionNote.summernote('code'));
+				if($answerNote.summernote('isEmpty')===false) {
+					$("#designAnswer").val($answerNote.summernote('code'));
+				}
+				var $explainNote=$("#explainNote");
+				if($explainNote.summernote('isEmpty')===false){
+					$("#designExplain").val($explainNote.summernote('code'));
+				}
+	            $.operate.save(prefix + "/add", $('#form-design-add').serialize());
+	        }
+	    }
+	</script>
+</body>
+</html>

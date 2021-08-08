@@ -1,0 +1,151 @@
+<!DOCTYPE HTML>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org" xmlns:shiro="http://www.pollix.at/thymeleaf/shiro">
+<meta charset="utf-8">
+<head>
+	<th:block th:include="include :: header('题目内容关联列表')" />
+</head>
+<body>
+	<div class="row">
+		<div class="btn-group-sm" id="toolbar" role="group" th:with="types=${@dict.getType('course_question_type')}">
+			<a class="btn btn-success" th:each="qt : ${types}"
+			   th:attr="data-value=${qt.dictValue},data-title=${qt.dictLabel}" th:style="${qtStat.last?'':'margin-right:4px;'}">
+				<i class="fa fa-plus"></i> [[${qt.dictLabel}]]
+			</a>
+			<a class="btn btn-primary btn-edit disabled" onclick="editRow()">
+				<i class="fa fa-edit"></i> 修改
+			</a>
+			<a class="btn btn-danger btn-del btn-del disabled" onclick="$.operate.removeAll()">
+				<i class="fa fa-remove"></i> 删除
+			</a>
+		</div>
+		<div class="col-sm-12 select-table table-striped box-shadow-none">
+			<table id="bootstrap-table" data-mobile-responsive="true"></table>
+		</div>
+	</div>
+    <th:block th:include="include :: footer" />
+    <script th:inline="javascript">
+		var questionType = [[${@dict.getType('course_question_type')}]];
+		var disables = [[${@dict.getType('sys_normal_disable')}]];
+		//var labels = [[${@dict.getType('course_sub_label')}]];
+        var prefix = ctx + "course/relation";
+        $(function() {
+			var iframe = $("#tab"+[[${id}]]+">iframe", parent.document), bt= $("#bootstrap-table");
+			var courseId=iframe.attr("data-course"), categoryId=iframe.attr("data-category");
+			bt.attr("data-course", courseId).attr("data-category", categoryId).attr("data-flag", "course");
+			var queryParams = function(params) {
+				return {
+					courseId:courseId, categoryId:categoryId,
+					pageSize:       params.limit,
+					pageNum:        params.offset / params.limit + 1,
+					searchValue:    params.search,
+					orderByColumn:  params.sort,
+					isAsc:          params.order
+				};
+			};
+            var options = {
+                url: prefix + "/list",
+                createUrl: prefix + "/add",
+                updateUrl: prefix + "/edit/{id}",
+                removeUrl: prefix + "/remove",
+				exportUrl: prefix + "/export",
+                modalName: "课程题目",
+				showSearch: false,
+                showPageGo: true,
+				queryParams: queryParams,
+                columns: [{
+		            checkbox: true
+		        },
+				{
+					field : 'id', 
+					title : '编号',
+					visible: false
+				},
+				{
+					field : 'questionType',
+					title : '题型',
+					sortable: true,
+					formatter: function(value, item, index) {
+						if(value === "choice"){
+							var answer = $.common.split(item.questionContent, "answer")[1];
+							var text = answer.indexOf(',') !== -1 ? "多选题" : "单选题";
+							return $.common.sprintf("<span class='badge badge-info'>%s</span>", text);
+						}
+						return $.table.selectDictLabel(questionType, value);
+					}
+				},
+				{
+					field : 'questionContent',
+					title : '题目',
+					sortable: true,
+					formatter: function(value, item, index) {
+						value = $.common.delHtmlTag(value);
+						let question = JSON.parse(value).question;
+						let content = $.common.linkTip(item.id, question, '', 50);
+						return $(content).removeAttr("data-toggle").prop("outerHTML");//移除tip功能，用title显示
+					}
+				},
+				/*{
+					field : 'questionContent',
+					title : '标签',
+					sortable: true,
+					formatter: function(value, item, index) {
+						value = $.common.delHtmlTag(value);
+						var label = $.parseJSON(value).label;
+						return $.table.selectDictLabel(labels, label);
+					}
+				},*/
+				{
+					field : 'questionContent',
+					title : '状态',
+					sortable: true,
+					formatter: function(value, item, index) {
+						value = $.common.delHtmlTag(value);
+						var status = JSON.parse(value).status;
+						return $.table.selectDictLabel(disables, status);
+					}
+				},
+		        {
+		            title: '操作',
+		            align: 'center',
+		            formatter: function(value, row, index) {
+		            	var actions = [];
+						//actions.push('<a class="btn btn-success btn-xs" href="#" onclick="uploadVideo(\'' + row.id + '\')"><i class="fa fa-video-camera"></i>音频/视频</a> ');
+		            	actions.push('<a class="btn btn-success btn-xs" href="#" onclick="editRow(\''+ row.questionId +'\', \''+ row.questionType +'\')"><i class="fa fa-edit"></i>编辑</a> ');
+                        actions.push('<a class="btn btn-danger btn-xs" href="#" onclick="$.operate.remove(\'' + row.id + '\')"><i class="fa fa-remove"></i>删除</a>');
+						return actions.join('');
+		            }
+		        }]
+            };
+            $.table.init(options);
+            //题型按钮添加
+			$('.btn-success', '#toolbar').on('click', function () {
+				var $this = $(this), dataType = $this.attr('data-value');
+				var url = ctx +"course/"+ dataType +"/add";
+				var modalTitle = "添加"+ $this.attr('data-title');
+				bt.attr("data-type", dataType);
+				$.modal.openFull(modalTitle, url);
+			});
+        });
+		var uploadVideo = function(id) {
+			var _url = prefix +"/video/question/"+ id, _width ='800px', _height = ($(window).height()- 20)+'px';
+			//如果是移动端，就使用自适应大小弹窗
+			if (navigator.userAgent.match(/(iPhone|iPod|Android|ios)/i)) {
+				_width = 'auto';
+				_height = 'auto';
+			}
+			layer.open({
+				type: 2,fix: false, maxmin: true, shade: 0.3,
+				area: [_width, _height],
+				title: "上传音频或视频文件",
+				content: _url,
+				btn: ['关闭'],
+				shadeClose: true,
+				cancel: function(index){
+					return true;
+				}
+			});
+		}
+    </script>
+	<th:block th:include="course/summernote :: relation-js" />
+</body>
+</html>

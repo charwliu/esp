@@ -1,0 +1,68 @@
+<!DOCTYPE HTML>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org" xmlns:shiro="http://www.pollix.at/thymeleaf/shiro">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link th:href="@{/css/bootstrap.min.css}" rel="stylesheet"/>
+<link th:href="@{/css/font-awesome.min.css}" rel="stylesheet"/>
+<link th:href="@{/css/animate.css}" rel="stylesheet"/>
+<link th:href="@{/css/style.css}" rel="stylesheet"/>
+<link th:href="@{/read/css/ry-ui.css}" rel="stylesheet"/>
+<style type="text/css">
+	.select-table{height: 88%;}
+	.tab-content{height: calc(100% - 40px);}
+	.tab-pane{height: 100%;}
+	.select-list{line-height:30px;} .select-list li{margin-right: 30px;}
+</style>
+<body class="gray-bg">
+	<div class="container-div">
+		<div class="row">
+			<div class="col-sm-12 search-collapse">
+				<form id="formId">
+					<div class="select-list">
+						<ul>
+							<li>
+								试卷名称：[[${info.courseName}]]
+							</li>
+
+							<li>
+								试卷科目：[[${@dict.getLabel('course_subject', info.subjectId)}]]
+							</li>
+
+							<li>
+								<a class="btn btn-primary btn-rounded btn-sm" th:attr="data-id=${info.termId}"><i class="fa fa-reply-all"></i>&nbsp;返回</a>
+							</li>
+						</ul>
+					</div>
+				</form>
+			</div>
+			<div class="col-sm-12 select-table table-striped">
+				<!-- Nav tabs -->
+				<ul class="nav nav-tabs" role="tablist" th:with="category=${@dict.getType('course_category')}">
+					<li role="presentation" th:each="dict : ${category}" th:class="${dictStat.first}?'active':''">
+						<a href="#" aria-controls="home" role="tab" data-toggle="tab"
+						   th:href="'#tab'+${dict.dictValue}"  th:text="${dict.dictLabel}"></a></li>
+				</ul>
+				<!-- Tab panes -->
+				<div class="tab-content" th:with="category=${@dict.getType('course_category')}">
+					<div role="tabpanel" th:each="dict : ${category}"
+						 th:class="'tab-pane '+(${dictStat.first}?'active':'')" th:id="'tab'+${dict.dictValue}">
+						<iframe name="course_iframe" width="100%" height="100%" frameborder="0"
+								th:src="${dictStat.first} ? @{/course/article/{id}(id=${dict.dictValue})} :
+															@{/course/relation/{id}(id=${dict.dictValue})}"
+								th:attr="data-course=${courseId},data-category=${dict.dictValue}"></iframe>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<th:block th:include="include :: footer" />
+	<script th:inline="javascript">
+		$(function() {
+			$(".btn-primary").on("click", function () {
+				var url = ctx + 'course/info/'+ $(this).attr("data-id");
+				createMenuItem(url, "试题管理");
+			});
+		});
+	</script>
+</body>
+</html>

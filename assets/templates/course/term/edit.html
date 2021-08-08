@@ -1,0 +1,125 @@
+<!DOCTYPE HTML>
+<html  lang="zh" xmlns:th="http://www.thymeleaf.org">
+<meta charset="utf-8">
+<head>
+	<th:block th:include="include :: header('修改培训班')" />
+	<th:block th:include="include :: datetimepicker-css" />
+</head>
+<body class="white-bg">
+    <div class="wrapper wrapper-content animated fadeInRight ibox-content">
+        <form class="form-horizontal m" id="form-term-edit" th:object="${term}">
+			<input id="termId" name="termId" th:field="*{termId}"  type="hidden">
+			<input id="deptId" name="deptId" th:field="*{deptId}" type="hidden">
+			<div class="form-group">
+				<label class="col-sm-3 control-label">组织机构：</label>
+				<div class="col-sm-8">
+					<div class="input-group">
+						<input name="deptName" onclick="selectDeptTree()" id="treeName" type="text" autocomplete="off"
+							   placeholder="请选择组织机构" class="form-control" required th:field="${dept.deptName}">
+						<span class="input-group-addon" onclick="selectDeptTree()" style="cursor:pointer;"><i class="fa fa-search"></i></span>
+					</div>
+				</div>
+			</div>
+			<div class="form-group">
+				<label for="termTitle" class="col-sm-3 control-label">培训班名称：</label>
+				<div class="col-sm-8">
+					<input id="termTitle" name="termTitle" th:field="*{termTitle}" class="form-control"
+						   type="text" placeholder="请输入培训班名称" required maxlength="50">
+				</div>
+			</div>
+			<div class="form-group">
+				<label class="col-sm-3 control-label">开始日期：</label>
+				<div class="col-sm-8">
+					<div class="input-group date">
+						<input id="datetimepicker-startTime" name="beginDate" class="form-control"
+							   placeholder="请选择开始日期" autocomplete="off" type="text" th:value="*{#dates.format(beginDate, 'yyyy-MM-dd')}" required>
+						<span class="input-group-addon"><i class="fa fa-calendar"></i></span>
+					</div>
+				</div>
+			</div>
+			<div class="form-group">
+				<label class="col-sm-3 control-label">结束日期：</label>
+				<div class="col-sm-8">
+					<div class="input-group date">
+						<input id="datetimepicker-endTime" name="endDate" class="form-control"
+							   placeholder="请选择结束日期" autocomplete="off" type="text" th:value="*{#dates.format(endDate, 'yyyy-MM-dd')}" required>
+						<span class="input-group-addon"><i class="fa fa-calendar"></i></span>
+					</div>
+				</div>
+			</div>
+			<div class="form-group">
+				<label class="col-sm-3 control-label">状态：</label>
+				<div class="col-sm-8">
+					<div class="radio-box" th:each="dict : ${@dict.getType('sys_normal_disable')}">
+						<input type="radio" th:id="${dict.dictCode}" name="termStatus" th:value="${dict.dictValue}" th:field="*{termStatus}">
+						<label th:for="${dict.dictCode}" th:text="${dict.dictLabel}"></label>
+					</div>
+				</div>
+			</div>
+		</form>
+    </div>
+    <th:block th:include="include :: footer" />
+	<th:block th:include="include :: datetimepicker-js"/>
+    <script type="text/javascript">
+		var prefix = ctx + "course/term";
+		$(function () {
+			var dateOption = {
+				format: "yyyy-mm-dd", minView: 2,
+				todayBtn: true, autoclose: true,
+				startDate: new Date()
+			};
+			$("#datetimepicker-startTime").datetimepicker(dateOption)
+				.on('changeDate', function (event) {
+					event.preventDefault();
+					event.stopPropagation();
+					var startTime = event.date;
+					$('#datetimepicker-endTime').datetimepicker('setStartDate', startTime);
+				});
+			$("#datetimepicker-endTime").datetimepicker(dateOption)
+				.on('changeDate', function (event) {
+					event.preventDefault();
+					event.stopPropagation();
+					var endTime = event.date;
+					$("#datetimepicker-startTime").datetimepicker('setEndDate', endTime);
+				});
+		});
+
+		$("#form-term-edit").validate({
+			onkeyup: false,
+			rules:{
+				termTitle:{
+					maxlength:50
+				}
+			},
+			focusCleanup: true
+		});
+
+		function selectDeptTree() {
+			var deptId = $("#deptId").val();
+			deptId = $.common.isEmpty(deptId) ? "100" : deptId;
+			var url = ctx + "system/dept/selectDeptTree/" + deptId;
+			var options = {
+				title: '选择组织机构',
+				width: "380",
+				url: url,
+				callBack: function(index, layero){
+					var tree = layero.find("iframe")[0].contentWindow.$._tree;
+					//if ($.tree.notAllowParents(tree)) {
+						var body = layer.getChildFrame('body', index);
+						$("#deptId").val(body.find('#treeId').val());
+						$("#treeName").val(body.find('#treeName').val());
+						layer.close(index);
+					//}
+				}
+			};
+			$.modal.openOptions(options);
+		}
+		
+		function submitHandler() {
+	        if ($.validate.form()) {
+	            $.operate.save(prefix + "/edit", $('#form-term-edit').serialize());
+	        }
+	    }
+	</script>
+</body>
+</html>

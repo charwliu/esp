@@ -1,0 +1,111 @@
+<!DOCTYPE HTML>
+<html  lang="zh" xmlns:th="http://www.thymeleaf.org">
+<meta charset="utf-8">
+<head>
+	<th:block th:include="include :: header('修改阅读文章')" />
+	<th:block th:include="include :: select2-css" />
+	<th:block th:include="course/summernote :: header" />
+</head>
+<body class="white-bg">
+    <div class="wrapper wrapper-content animated fadeInRight ibox-content">
+        <form class="form-horizontal m" id="form-article-edit" th:object="${article}">
+            <input id="articleId" name="articleId" th:field="*{articleId}"  type="hidden">
+            <input id="wordNumber" name="wordNumber" th:field="*{wordNumber}"  type="hidden">
+			<!--<div class="form-group">
+				<label class="col-sm-2 control-label">所属分类：</label>
+				<div class="col-sm-9 form-control-static" th:text="${@dict.getLabel('course_category', article.classifyId)}">
+					<select id="classifyId" name="classifyId" class="form-control m-b" th:with="type=${@dict.getType('course_category')}">
+						<option th:each="dict : ${type}" th:text="${dict.dictLabel}" th:selected="${article.classifyId eq dict.dictValue}" th:value="${dict.dictValue}"></option>
+					</select>
+				</div>
+			</div>-->
+			<div class="form-group">	
+				<label for="articleTitle" class="col-sm-2 control-label">标题：</label>
+				<div class="col-sm-9">
+					<input id="articleTitle" name="articleTitle" th:field="*{articleTitle}" class="form-control" type="text">
+				</div>
+			</div>
+			<div class="form-group">
+				<label for="articleTime" class="col-sm-2 control-label">阅读时间：</label>
+				<div class="col-sm-8">
+					<input id="articleTime" name="articleTime" th:field="*{articleTime}" class="form-control" type="number">
+				</div>
+				<div class="col-sm-1 control-label">分钟</div>
+			</div>
+			<div class="form-group">	
+				<label class="col-sm-2 control-label">内容：</label>
+				<div class="col-sm-9">
+					<input id="articleContent" name="articleContent" th:field="*{articleContent}" type="hidden">
+					<div id="articleNote" class="summernote"></div>
+					<label class="label-error"><i class="fa fa-times-circle"></i>必填</label>
+				</div>
+			</div>
+			<div class="form-group">
+				<label for="articleTime" class="col-sm-2 control-label">字数大约：</label>
+				<div class="col-sm-9 form-control-static" id="aboutWordNumber" th:text="${article.wordNumber}"></div>
+			</div>
+			<!--<div class="form-group">
+				<label for="articleLabel" class="col-sm-2 control-label">标签：</label>
+				<div class="col-sm-9">
+					<input id="articleLabel" name="articleLabel" th:field="*{articleLabel}" class="form-control" type="text" maxlength="30">
+				</div>
+			</div>-->
+			<div class="form-group">
+				<label class="col-sm-2 control-label">状态：</label>
+				<div class="col-sm-9">
+					<div class="radio-box" th:each="dict : ${@dict.getType('sys_normal_disable')}">
+						<input type="radio" th:id="${dict.dictCode}" name="articleStatus" th:value="${dict.dictValue}" th:field="*{articleStatus}">
+						<label th:for="${dict.dictCode}" th:text="${dict.dictLabel}"></label>
+					</div>
+				</div>
+			</div>
+		</form>
+    </div>
+    <th:block th:include="include :: footer" />
+	<th:block th:include="include :: select2-js" />
+	<th:block th:include="course/summernote :: footer(220)" />
+    <script type="text/javascript">
+		var prefix = ctx + "course/article";
+		$(function(){
+			var table = $("#bootstrap-table", parent.document);
+			var dataFlag = table.attr("data-flag");
+			if(dataFlag=="game"||dataFlag=="skill"){
+				$("#articleTime").parents("div.form-group").remove();//移除阅读时间
+				$("#classifyId option[value='2']").remove();
+			}
+			$("#classifyId option[value='3'],#classifyId option[value='4'],#classifyId option[value='5']").remove();
+			var content = $("#articleContent").val();
+			var $articleNote = $('#articleNote');
+			$articleNote.summernote('code', content);
+			$articleNote.on('summernote.change', function(we, contents, $editable) {
+				var len = $.common.delHtmlTag(contents).replace(/(\s|&nbsp;)+/g,'').length;
+				$("#aboutWordNumber").text(len);
+				$("#wordNumber").val(len);
+			});
+		});
+
+		$("#form-article-edit").validate({
+			onkeyup: false,
+			rules:{
+				articleTitle:{
+					required:true,
+					maxlength:50
+				}
+			},
+			focusCleanup: true
+		});
+		
+		function submitHandler() {
+			var $articleNote = $("#articleNote");
+			var isEmpty = $articleNote.summernote('isEmpty');
+			if(isEmpty){
+				$(".label-error", $articleNote.parent('div')).show();
+			}
+			if ($.validate.form() && isEmpty===false) {
+				$("#articleContent").val($articleNote.summernote('code'));
+	            $.operate.save(prefix + "/edit", $('#form-article-edit').serialize());
+	        }
+	    }
+	</script>
+</body>
+</html>

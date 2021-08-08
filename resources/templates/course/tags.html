@@ -1,0 +1,96 @@
+<!--多项选择模板-->
+<div th:fragment="tags-html(id, title, required)">
+	<div class="form-group">
+		<label class="col-sm-3 control-label m-t-sm">
+			<span th:style="'color:red;display:' + ${required == 'required' ? 'inline-block' : 'none'}">*</span><span th:text="${title}"></span>：</label>
+		<div class="col-sm-8">
+			<div class="input-group">
+				<div class="tags" th:switch="${required}">
+					<th:block th:case="'required'">
+						<input type="text" th:id="${'input_'+ id}" th:name="${'input_'+ id}" class="lay-tags" readonly
+							   th:placeholder="${'请选择'+title}" required>
+					</th:block>
+					<th:block th:case="*">
+						<input type="text" th:id="${'input_'+ id}" th:name="${'input_'+ id}" class="lay-tags" readonly
+							   th:placeholder="${'请选择'+title}">
+					</th:block>
+				</div>
+				<span th:id="${'span_'+ id}" class="input-group-addon" style="cursor:pointer;">
+					<i class="fa fa-lg fa-search"></i></span>
+			</div>
+		</div>
+	</div>
+</div>
+
+<!--参数说明：组件Id, 标题, 弹框url, tags回显的表格字段名, 已选择的Id集合，已选择的名称集合-->
+<div th:fragment="tags-js(id, title, url, selectIds, selectTitles)">
+	<script th:inline="javascript">
+		$(function () {
+			layui.config({
+				base: ctx + 'ajax/libs/layui/'
+			}).extend({ //设定组件别名
+				layTags: 'layTags'
+			});
+			let tagsInst = null;
+			$("#span_"+ [[${id}]]).on('click', function () {
+				let $this = $(this), _width = $this.attr("data-width");
+				let url = ctx + [[${url}]];
+				let options = {
+					title: "选择" + [[${title}]],shadeClose: true,
+					width: $.common.isEmpty(_width) ? "380" : _width,
+					url: $.common.sprintf(url, $("#topicId").val()),/*处理模板传递主题Id*/
+					callBack: function (index, layero) {
+						let contentWindow = layero.find("iframe")[0].contentWindow;
+						//let contentDocument = contentWindow.document;
+						let tree = contentWindow.$._tree;
+						let nodes = tree.getCheckedNodes(true);
+						if (nodes.length === 0) {
+							$.modal.alertWarning("请至少选择一个"+[[${title}]]);
+							return false;
+						}
+						let json = [], parentIdSet = [];
+						$.each(nodes, function (i, node) {
+							parentIdSet.push(node.pId);
+						});
+						$.each(nodes, function (i, node) {
+							let nodeId = node.id;
+							if($.inArray(nodeId, parentIdSet)===-1)//没在父级节点中的则可添加
+								json.push({id: node.id, title: node.name});
+						});
+						tagsInst.add(json);
+						$this.prev("div.tags").find('input.lay-tags').hide().next().hide();
+						layer.close(index);
+					}
+				};
+				$.modal.openOptions(options);
+			});
+			layui.use(['layTags'], function () {
+				let elemId = "#input_" + [[${id}]];
+				let option = {elem: elemId, content:[]};
+				let selectIds = [[${selectIds}]], selectTitles = [[${selectTitles}]];
+				if($.trim(selectIds) !== ""){
+					let contentSet = [];
+					$(elemId).hide().next().hide();
+					let ids = selectIds.split(",");
+					let titles = selectTitles.split(",");
+					$.each(ids, function (index, id) {
+						contentSet.push({id:id, title:titles[index]});
+					});
+					option.content = contentSet;
+				}
+				let layTags = layui.layTags;
+				tagsInst = layTags.render(option);
+			});
+		});
+		var getSelectTags = function (tagsSet) {//获取已选择选项
+			$.each(tagsSet, function (index, tag) {
+				let tags = [];
+				let selectTags = $("#span_"+ tag.id).prev("div.tags").children('span');
+				$.each(selectTags, function() {
+					tags.push($(this).attr("data-id"));
+				});
+				$("#"+ tag.name).val(tags.length>0 ? tags.join(","):'');
+			});
+		};
+	</script>
+</div>

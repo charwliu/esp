@@ -1,0 +1,154 @@
+<!DOCTYPE HTML>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org" xmlns:shiro="http://www.pollix.at/thymeleaf/shiro">
+<meta charset="utf-8">
+<head>
+	<th:block th:include="include :: header('设计题列表')" />
+</head>
+<body class="gray-bg">
+    
+     <div class="container-div">
+		<div class="row">
+			<div class="col-sm-12 search-collapse">
+				<form id="formId">
+					<div class="select-list">
+						<ul>
+							<li>
+								题目：<input type="text" name="designQuestion"/>
+							</li>
+
+							<li>
+								答案：<input type="text" name="designAnswer"/>
+							</li>
+
+							<li>
+								详解：<input type="text" name="designExplain"/>
+							</li>
+
+							<li>
+								状态 （0正常 1停用）：<input type="text" name="designStatus"/>
+							</li>
+
+							<li>
+								创建人：<input type="text" name="createBy"/>
+							</li>
+
+							<li>
+								创建时间：<input type="text" name="createTime"/>
+							</li>
+
+							<li>
+								更新人：<input type="text" name="updateBy"/>
+							</li>
+
+							<li>
+								更新时间：<input type="text" name="updateTime"/>
+							</li>
+
+							<li>
+								<a class="btn btn-primary btn-rounded btn-sm" onclick="$.table.search()"><i class="fa fa-search"></i>&nbsp;搜索</a>
+								<a class="btn btn-warning btn-rounded btn-sm" onclick="$.form.reset()"><i class="fa fa-refresh"></i>&nbsp;重置</a>
+							</li>
+						</ul>
+					</div>
+				</form>
+			</div>
+			
+	        <div class="btn-group-sm" id="toolbar" role="group">
+				<a class="btn btn-success" onclick="$.operate.add()" shiro:hasPermission="course:design:add">
+					<i class="fa fa-plus"></i> 添加
+				</a>
+				<a class="btn btn-primary btn-edit disabled" onclick="$.operate.edit()" shiro:hasPermission="course:design:edit">
+					<i class="fa fa-edit"></i> 修改
+				</a>
+				<a class="btn btn-danger btn-del btn-del disabled" onclick="$.operate.removeAll()" shiro:hasPermission="course:design:remove">
+					<i class="fa fa-remove"></i> 删除
+				</a>
+				<a class="btn btn-warning" onclick="$.table.exportExcel()" shiro:hasPermission="course:design:export">
+						<i class="fa fa-download"></i> 导出
+				 </a>
+			</div>
+			<div class="col-sm-12 select-table table-striped">
+				<table id="bootstrap-table" data-mobile-responsive="true"></table>
+			</div>
+		</div>
+	</div>
+    <th:block th:include="include :: footer" />
+    <script th:inline="javascript">
+        var editFlag = [[${@permission.hasPermi('course:design:edit')}]];
+        var removeFlag = [[${@permission.hasPermi('course:design:remove')}]];
+        var prefix = ctx + "course/design";
+
+        $(function() {
+            var options = {
+                url: prefix + "/list",
+                createUrl: prefix + "/add",
+                updateUrl: prefix + "/edit/{id}",
+                removeUrl: prefix + "/remove",
+				exportUrl: prefix + "/export",
+                modalName: "设计题",
+		        showExport: true,
+                showPageGo: true,
+                columns: [{
+		            checkbox: true
+		        },
+				{
+					field : 'designId', 
+					title : '设计题编号',
+					visible: false
+				},
+				{
+					field : 'designQuestion', 
+					title : '题目',
+					sortable: true
+				},
+				{
+					field : 'designAnswer', 
+					title : '答案',
+					sortable: true
+				},
+				{
+					field : 'designExplain', 
+					title : '详解',
+					sortable: true
+				},
+				{
+					field : 'designStatus', 
+					title : '状态 （0正常 1停用）',
+					sortable: true
+				},
+				{
+					field : 'createBy', 
+					title : '创建人',
+					sortable: true
+				},
+				{
+					field : 'createTime', 
+					title : '创建时间',
+					sortable: true
+				},
+				{
+					field : 'updateBy', 
+					title : '更新人',
+					sortable: true
+				},
+				{
+					field : 'updateTime', 
+					title : '更新时间',
+					sortable: true
+				},
+		        {
+		            title: '操作',
+		            align: 'center',
+		            formatter: function(value, row, index) {
+		            	var actions = [];
+		            	actions.push('<a class="btn btn-success btn-xs ' + editFlag + '" href="#" onclick="$.operate.edit(\'' + row.designId + '\')"><i class="fa fa-edit"></i>编辑</a> ');
+                        actions.push('<a class="btn btn-danger btn-xs ' + removeFlag + '" href="#" onclick="$.operate.remove(\'' + row.designId + '\')"><i class="fa fa-remove"></i>删除</a>');
+						return actions.join('');
+		            }
+		        }]
+            };
+            $.table.init(options);
+        });
+    </script>
+</body>
+</html>

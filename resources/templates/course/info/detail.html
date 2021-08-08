@@ -1,0 +1,66 @@
+<!DOCTYPE HTML>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org" xmlns:shiro="http://www.pollix.at/thymeleaf/shiro">
+<head>
+	<th:block th:include="include :: header('更多成绩列表')" />
+</head>
+<body class="gray-bg">
+	<div class="container-div ui-layout-center">
+		<div class="row">
+			<div class="col-sm-12 select-table table-striped">
+				<table id="bootstrap-table" data-mobile-responsive="true"></table>
+			</div>
+		</div>
+ 	</div>
+    <th:block th:include="include :: footer" />
+    <script th:inline="javascript">
+        var prefix = ctx + "course/info";
+		var queryParams = function(params) {
+			return {
+				courseId:		[[${courseId}]],
+				customerId:		[[${customerId}]],
+				pageSize:       params.limit,
+				pageNum:        params.offset / params.limit + 1,
+				searchValue:    params.search,
+				orderByColumn:  params.sort,
+				isAsc:          params.order
+			};
+		};
+        $(function() {
+            var options = {
+                url: prefix + "/detail",
+                modalName: "更多成绩列表",
+				sortName: "createTime",
+				sortOrder: "desc",
+				showSearch: false,
+				queryParams: queryParams,
+                columns: [
+				{
+					field : 'id',
+					title : '编号',
+					visible: false
+				},
+				{
+					field : 'createTime',
+					title : '考试时间',
+					sortable: true
+				},
+				{
+					field : 'answerRate',
+					title : '答题正确率',
+					sortable: true,
+					formatter: function(value, row, index) {
+						return value +"%";
+					},
+					align: 'center'
+				},
+				{
+					field : 'readTimeTxt',
+					title : '考试用时',
+					sortable: true
+				}]
+            };
+            $.table.init(options);
+        });
+    </script>
+</body>
+</html>
