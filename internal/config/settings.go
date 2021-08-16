@@ -71,7 +71,7 @@ type IndexSettings struct {
 type StackSettings struct {
 	UUID bool `json:"uuid" yaml:"UUID"`
 	Meta bool `json:"meta" yaml:"Meta"`
-	Name bool `json:"name" yaml:"Name"`
+	Name bool `json:"name" yaml:"UserName"`
 }
 
 // ShareSettings represents content sharing settings.
@@ -81,7 +81,7 @@ type ShareSettings struct {
 
 //// DownloadSettings represents content download settings.
 //type DownloadSettings struct {
-//	Name entity.DownloadName `json:"name" yaml:"Name"`
+//	UserName entity.DownloadName `json:"name" yaml:"UserName"`
 //}
 
 // Settings represents user settings for Web UI, indexing, and import.
@@ -152,7 +152,7 @@ func NewSettings() *Settings {
 			Title: "",
 		},
 		//Download: DownloadSettings{
-		//	Name: entity.DownloadNameDefault,
+		//	UserName: entity.DownloadNameDefault,
 		//},
 	}
 }

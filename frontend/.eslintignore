@@ -1,6 +1,5 @@
-scripts
 node_modules
-postcss.config.js
-src/lib/entities
-src/lib/apis
-openApi
+dist
+webpack
+.eslintrc.js
+webpack.config.babel.js

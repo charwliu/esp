@@ -21,10 +21,18 @@ type Types map[string]interface{}
 
 // Entities List of database entities and their table names.
 var Entities = Types{
-	"errors":    &Error{},
-	"addresses": &Addresses{},
-	"users":     &Users{},
-	"passwords": &Password{},
+	"error":                     &Error{},
+	"user":                      &User{},
+	"password":                  &Password{},
+	"dept":                      &Dept{},
+	"address":                   &Address{},
+	"menu":                      &Menu{},
+	//"organization":              &Organization{},
+	//"oauth_client":              &OauthClient{},
+	//"user_registration_profile": &UserRegistrationProfile{},
+	//"auth_token":                &AuthToken{},
+	//"pep_proxy":                 &PepProxy{},
+
 }
 
 type RowCount struct {
@@ -92,7 +100,9 @@ func (list Types) Drop() {
 // CreateDefaultFixtures Creates default database entries for test and production.
 func CreateDefaultFixtures() {
 	CreateUnknownAddress()
+	CreateUnknownDept()
 	CreateDefaultUsers()
+
 	//CreateUnknownPlace()
 	//CreateUnknownLocation()
 	//CreateUnknownCountry()

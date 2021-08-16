@@ -20,7 +20,7 @@ func GeneratePassword(p string) string {
 		return err.Error()
 	}
 
-	// GenerateFromPassword returns a byte slice so we need to
+	// GenerateFromPassword returns a byte slice, so we need to
 	// convert the bytes to a string and return it.
 	return string(hash)
 }

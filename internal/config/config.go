@@ -13,13 +13,11 @@ import (
 	"sync"
 	"time"
 
-	fsession "github.com/fasthttp/session/v2"
-	"github.com/gofiber/session/v2"
-	"github.com/gofiber/session/v2/provider/memcache"
-	"github.com/gofiber/session/v2/provider/mysql"
-	"github.com/gofiber/session/v2/provider/postgres"
-	"github.com/gofiber/session/v2/provider/redis"
-	"github.com/gofiber/session/v2/provider/sqlite3"
+	"github.com/gofiber/fiber/v2/middleware/session"
+	"github.com/gofiber/storage/memcache"
+	"github.com/gofiber/storage/mysql"
+	"github.com/gofiber/storage/redis"
+	"github.com/gofiber/storage/sqlite3"
 	"github.com/gofiber/template/ace"
 	"github.com/gofiber/template/amber"
 	"github.com/gofiber/template/django"
@@ -28,6 +26,7 @@ import (
 	"github.com/gofiber/template/jet"
 	"github.com/gofiber/template/mustache"
 	"github.com/gofiber/template/pug"
+	"github.com/jameskeane/bcrypt"
 	"github.com/klauspost/cpuid/v2"
 
 	"github.com/alexedwards/argon2id"
@@ -42,10 +41,10 @@ import (
 	"github.com/gofiber/fiber/v2"
 
 	"go.vixal.xyz/esp/internal/event"
-	"go.vixal.xyz/esp/internal/hub"
 	"go.vixal.xyz/esp/internal/mutex"
 	"go.vixal.xyz/esp/pkg/fs"
 	"go.vixal.xyz/esp/pkg/rnd"
+	"go.vixal.xyz/esp/pkg/storage/postgres"
 	"go.vixal.xyz/esp/pkg/txt"
 )
 
@@ -62,13 +61,11 @@ type Config struct {
 	db           *gorm.DB
 	options      *Options
 	settings     *Settings
-	hub          *hub.Config
 	fiber        *fiber.Config
 	token        string
 	serial       string
 	logger       *LoggerConfig
 	errorHandler fiber.ErrorHandler
-	access       *AccessLoggerConfig
 }
 
 type LoggerConfig struct {
@@ -319,144 +316,176 @@ func (c *Config) setDefaults() {
 
 func (c *Config) getFiberViewsEngine() fiber.Views {
 	var viewsEngine fiber.Views
-	switch strings.ToLower(c.FiberViews()) {
+	views := c.FiberViews()
+
+	switch strings.ToLower(views.Engine) {
 	case "ace":
 		// Set file extension dynamically to FIBER_VIEWS
-		if c.FiberViewsExtension() == "" {
-			c.SetFiberViewsExtension(".ace")
+		if views.Extension == "" {
+			views.Extension = ".ace"
 		}
-		engine := ace.New(c.FiberViewsDirectory(), c.FiberViewsExtension())
-		engine.Reload(c.FiberViewsReload()).
-			Debug(c.FiberViewsDebug()).
-			Layout(c.FiberViewsLayout()).
-			Delims(c.FiberViewsDelimsL(), c.FiberViewsDelimsR())
+		engine := ace.New(views.Directory, views.Extension)
+		engine.Reload(views.Reload).
+			Debug(views.Debug).
+			Layout(views.Layout).
+			Delims(views.DelimsL, views.DelimsR)
 		viewsEngine = engine
 		break
 	case "amber":
 		// Set file extension dynamically to FIBER_VIEWS
-		if c.FiberViewsExtension() == "" {
-			c.SetFiberViewsExtension(".amber")
+		if views.Extension == "" {
+			views.Extension = ".amber"
 		}
-		engine := amber.New(c.FiberViewsDirectory(), c.FiberViewsExtension())
-		engine.Reload(c.FiberViewsReload()).
-			Debug(c.FiberViewsDebug()).
-			Layout(c.FiberViewsLayout()).
-			Delims(c.FiberViewsDelimsL(), c.FiberViewsDelimsR())
+		engine := amber.New(views.Directory, views.Extension)
+		engine.Reload(views.Reload).
+			Debug(views.Debug).
+			Layout(views.Layout).
+			Delims(views.DelimsL, views.DelimsR)
 		viewsEngine = engine
 		break
 	case "django":
 		// Set file extension dynamically to FIBER_VIEWS
-		if c.FiberViewsExtension() == "" {
-			c.SetFiberViewsExtension(".django")
+		if views.Extension == "" {
+			views.Extension = ".django"
 		}
-		engine := django.New(c.FiberViewsDirectory(), c.FiberViewsExtension())
-		engine.Reload(c.FiberViewsReload()).
-			Debug(c.FiberViewsDebug()).
-			Layout(c.FiberViewsLayout())
+		engine := django.New(views.Directory, views.Extension)
+		engine.Reload(views.Reload).
+			Debug(views.Debug).
+			Layout(views.Layout)
 		viewsEngine = engine
 		break
 	case "handlebars":
 		// Set file extension dynamically to FIBER_VIEWS
-		if c.FiberViewsExtension() == "" {
-			c.SetFiberViewsExtension(".hbs")
+		if views.Extension == "" {
+			views.Extension = ".hbs"
 		}
-		engine := handlebars.New(c.FiberViewsDirectory(), c.FiberViewsExtension())
-		engine.Reload(c.FiberViewsReload()).
-			Debug(c.FiberViewsDebug()).
-			Layout(c.FiberViewsLayout()).
-			Delims(c.FiberViewsDelimsL(), c.FiberViewsDelimsR())
+		engine := handlebars.New(views.Directory, views.Extension)
+		engine.Reload(views.Reload).
+			Debug(views.Debug).
+			Layout(views.Layout).
+			Delims(views.DelimsL, views.DelimsR)
 		viewsEngine = engine
 		break
 	case "jet":
 		// Set file extension dynamically to FIBER_VIEWS
-		if c.FiberViewsExtension() == "" {
-			c.SetFiberViewsExtension(".jet")
+		if views.Extension == "" {
+			views.Extension = ".jet"
 		}
-		engine := jet.New(c.FiberViewsDirectory(), c.FiberViewsExtension())
-		engine.Reload(c.FiberViewsReload()).
-			Debug(c.FiberViewsDebug()).
-			Layout(c.FiberViewsLayout()).
-			Delims(c.FiberViewsDelimsL(), c.FiberViewsDelimsR())
+		engine := jet.New(views.Directory, views.Extension)
+		engine.Reload(views.Reload).
+			Debug(views.Debug).
+			Layout(views.Layout).
+			Delims(views.DelimsL, views.DelimsR)
 		viewsEngine = engine
 		break
 	case "mustache":
 		// Set file extension dynamically to FIBER_VIEWS
-		if c.FiberViewsExtension() == "" {
-			c.SetFiberViewsExtension(".mustache")
+		if views.Extension == "" {
+			views.Extension = ".mustache"
 		}
-		engine := mustache.New(c.FiberViewsDirectory(), c.FiberViewsExtension())
-		engine.Reload(c.FiberViewsReload()).
-			Debug(c.FiberViewsDebug()).
-			Layout(c.FiberViewsLayout()).
-			Delims(c.FiberViewsDelimsL(), c.FiberViewsDelimsR())
+		engine := mustache.New(views.Directory, views.Extension)
+		engine.Reload(views.Reload).
+			Debug(views.Debug).
+			Layout(views.Layout).
+			Delims(views.DelimsL, views.DelimsR)
 		viewsEngine = engine
 		break
 	case "pug":
 		// Set file extension dynamically to FIBER_VIEWS
-		if c.FiberViewsExtension() == "" {
-			c.SetFiberViewsExtension(".pug")
+		if views.Extension == "" {
+			views.Extension = ".pug"
 		}
-		engine := pug.New(c.FiberViewsDirectory(), c.FiberViewsExtension())
-		engine.Reload(c.FiberViewsReload()).
-			Debug(c.FiberViewsDebug()).
-			Layout(c.FiberViewsLayout()).
-			Delims(c.FiberViewsDelimsL(), c.FiberViewsDelimsR())
+		engine := pug.New(views.Directory, views.Extension)
+		engine.Reload(views.Reload).
+			Debug(views.Debug).
+			Layout(views.Layout).
+			Delims(views.DelimsL, views.DelimsR)
 		viewsEngine = engine
 		break
 	// Use the official html/template package by default
 	default:
 		// Set file extension dynamically to FIBER_VIEWS
-		if c.FiberViewsExtension() == "" {
-			c.SetFiberViewsExtension(".html")
+		if views.Extension == "" {
+			views.Extension = ".html"
 		}
-		engine := html.New(c.FiberViewsDirectory(), c.FiberViewsExtension())
-		engine.Reload(c.FiberViewsReload()).
-			Debug(c.FiberViewsDebug()).
-			Layout(c.FiberViewsLayout()).
-			Delims(c.FiberViewsDelimsL(), c.FiberViewsDelimsR())
+		engine := html.New(views.Directory, views.Extension)
+		engine.Reload(views.Reload).
+			Debug(views.Debug).
+			Layout(views.Layout).
+			Delims(views.DelimsL, views.DelimsR)
 		viewsEngine = engine
 		break
 	}
+
 	return viewsEngine
 }
 
-func (c *Config) initFiber() {
-	c.fiber = &fiber.Config{
-		Prefork:                   c.Prefork(),
-		ServerHeader:              c.ServerHeader(),
-		StrictRouting:             c.StrictRouting(),
-		CaseSensitive:             c.CaseSensitive(),
-		Immutable:                 c.Immutable(),
-		UnescapePath:              c.UnescapePath(),
-		ETag:                      c.ETag(),
-		BodyLimit:                 c.BodyLimit(),
-		Concurrency:               c.Concurrency(),
-		Views:                     c.getFiberViewsEngine(),
-		ReadTimeout:               c.ReadTimeout(),
-		WriteTimeout:              c.WriteTimeout(),
-		IdleTimeout:               c.IdleTimeout(),
-		ReadBufferSize:            c.ReadBufferSize(),
-		WriteBufferSize:           c.WriteBufferSize(),
-		CompressedFileSuffix:      c.CompressedFileSuffix(),
-		ProxyHeader:               c.ProxyHeader(),
-		GETOnly:                   c.GETOnly(),
-		ErrorHandler:              c.errorHandler,
-		DisableKeepalive:          c.DisableKeepalive(),
-		DisableDefaultDate:        c.DisableDefaultDate(),
-		DisableDefaultContentType: c.DisableDefaultContentType(),
-		DisableHeaderNormalizing:  c.DisableHeaderNormalizing(),
-		DisableStartupMessage:     c.DisableStartupMessage(),
-		ReduceMemoryUsage:         c.ReduceMemoryUsage(),
-	}
-}
-
 func (c *Config) FiberConfig() *fiber.Config {
+	if c.options.FiberConfig == nil {
+		c.options.FiberConfig = &FiberConfig{
+			Prefork:                   false,
+			ServerHeader:              "",
+			StrictRouting:             false,
+			CaseSensitive:             false,
+			Immutable:                 false,
+			UnescapePath:              false,
+			ETag:                      false,
+			BodyLimit:                 4194303,
+			Concurrency:               262144,
+			ReadTimeout:               0,
+			WriteTimeout:              0,
+			IdleTimeout:               0,
+			ReadBufferSize:            4096,
+			WriteBufferSize:           4096,
+			CompressedFileSuffix:      ".fiber.gz",
+			ProxyHeader:               "",
+			GETOnly:                   false,
+			DisableKeepalive:          false,
+			DisableDefaultDate:        false,
+			DisableDefaultContentType: false,
+			DisableHeaderNormalizing:  false,
+			DisableStartupMessage:     false,
+			ReduceMemoryUsage:         false,
+		}
+	}
+	cfg := c.options.FiberConfig
+	c.fiber = &fiber.Config{
+		Prefork:                   cfg.Prefork,
+		ServerHeader:              cfg.ServerHeader,
+		StrictRouting:             cfg.StrictRouting,
+		CaseSensitive:             cfg.CaseSensitive,
+		Immutable:                 cfg.Immutable,
+		UnescapePath:              cfg.UnescapePath,
+		ETag:                      cfg.ETag,
+		BodyLimit:                 cfg.BodyLimit,
+		Concurrency:               cfg.Concurrency,
+		Views:                     c.getFiberViewsEngine(),
+		ViewsLayout:               cfg.ViewsLayout,
+		ReadTimeout:               cfg.ReadTimeout,
+		WriteTimeout:              cfg.WriteTimeout,
+		IdleTimeout:               cfg.IdleTimeout,
+		ReadBufferSize:            cfg.ReadBufferSize,
+		WriteBufferSize:           cfg.WriteBufferSize,
+		CompressedFileSuffix:      cfg.CompressedFileSuffix,
+		ProxyHeader:               cfg.ProxyHeader,
+		GETOnly:                   cfg.GETOnly,
+		ErrorHandler:              defaultErrorHandler,
+		DisableKeepalive:          cfg.DisableKeepalive,
+		DisableDefaultDate:        cfg.DisableDefaultDate,
+		DisableDefaultContentType: cfg.DisableDefaultContentType,
+		DisableHeaderNormalizing:  cfg.DisableHeaderNormalizing,
+		DisableStartupMessage:     cfg.DisableStartupMessage,
+		AppName:                   c.options.Name,
+		ReduceMemoryUsage:         cfg.ReduceMemoryUsage,
+		EnableTrustedProxyCheck:   cfg.EnableTrustedProxyCheck,
+		TrustedProxies:            cfg.TrustedProxies,
+	}
 	return c.fiber
 }
 
 //func (config *Config) setLoggerConfig() {
 //	config.logger = &LoggerConfig{
-//		Type:        config.GetString("LOG_TYPE"),
+//		ClientType:        config.GetString("LOG_TYPE"),
 //		Environment: config.GetString("LOG_ENV"),
 //		Filename:    config.GetString("LOG_FILENAME"),
 //		MaxSize:     config.GetInt("LOG_MAXSIZE"),
@@ -467,110 +496,94 @@ func (c *Config) FiberConfig() *fiber.Config {
 //		Verbose:     config.GetBool("LOG_VERBOSE"),
 //	}
 //}
-//
+
 func (c *Config) LoggerConfig() *LoggerConfig {
 	return c.logger
 }
 
 func (c *Config) HasherConfig() hashing.Config {
-	if strings.ToLower(c.HasherDriver()) == "bcrypt" {
+	driver := c.HasherDriver()
+	if strings.ToLower(driver.Driver) == "bcrypt" {
 		return hashing.Config{
 			Driver: bcrypt_driver.New(bcrypt_driver.Config{
-				Complexity: c.HasherRounds(),
+				Complexity: driver.Rounds,
 			})}
 	} else {
 		return hashing.Config{
 			Driver: argon_driver.New(argon_driver.Config{
 				Params: &argon2id.Params{
-					Memory:      c.HasherMemory(),
-					Iterations:  c.HasherIterations(),
-					Parallelism: c.HasherParallelism(),
-					SaltLength:  c.HasherSaltLength(),
-					KeyLength:   c.HasherKeyLength(),
+					Memory:      driver.Memory,
+					Iterations:  driver.Iterations,
+					Parallelism: driver.Parallelism,
+					SaltLength:  driver.SaltLength,
+					KeyLength:   driver.KeyLength,
 				}})}
 	}
 }
 
 func (c *Config) SessionConfig() session.Config {
-	var provider fsession.Provider
-	switch strings.ToLower(c.SessionProvider()) {
+	var storage fiber.Storage
+	cfg := c.Session()
+
+	switch strings.ToLower(cfg.Provider) {
 	case "memcache":
-		sessionProvider, err := memcache.New(memcache.Config{
-			KeyPrefix: c.SessionKeyPrefix(),
-			ServerList: []string{
-				c.SessionHost() + ":" + strconv.Itoa(c.SessionPort()),
-			},
+		storage = memcache.New(memcache.Config{
+			Servers: cfg.Host + ":" + strconv.Itoa(cfg.Port),
 		})
-		if err != nil {
-			fmt.Println("failed to initialized memcache session provider:", err.Error())
-			break
-		}
-		provider = sessionProvider
+
 		break
 	case "mysql":
-		sessionProvider, err := mysql.New(mysql.Config{
-			Host:      c.SessionHost(),
-			Port:      c.SessionPort(),
-			Username:  c.SessionUsername(),
-			Password:  c.SessionPassword(),
-			Database:  c.SessionDatabase(),
-			TableName: c.SessionTableName(),
+		storage = mysql.New(mysql.Config{
+			Host:       cfg.Host,
+			Port:       cfg.Port,
+			Username:   cfg.Username,
+			Password:   cfg.Password,
+			Database:   cfg.Database,
+			Table:      cfg.Table,
+			GCInterval: cfg.GCInterval,
 		})
-		if err != nil {
-			fmt.Println("failed to initialized mysql session provider:", err.Error())
-			break
-		}
-		provider = sessionProvider
 		break
 	case "postgresql", "postgres":
-		sessionProvider, err := postgres.New(postgres.Config{
-			Host:      c.SessionHost(),
-			Port:      int64(c.SessionPort()),
-			Username:  c.SessionUsername(),
-			Password:  c.SessionPassword(),
-			Database:  c.SessionDatabase(),
-			TableName: c.SessionTableName(),
+		storage = postgres.New(postgres.Config{
+			Host:       cfg.Host,
+			Port:       cfg.Port,
+			Username:   cfg.Username,
+			Password:   cfg.Password,
+			Database:   cfg.Database,
+			Table:      cfg.Table,
+			GCInterval: cfg.GCInterval,
 		})
-		if err != nil {
-			fmt.Println("failed to initialized postgresql session provider:", err.Error())
-			break
-		}
-		provider = sessionProvider
 		break
 	case "redis":
-		sessionProvider, err := redis.New(redis.Config{
-			KeyPrefix: c.SessionKeyPrefix(),
-			Addr:      c.SessionHost() + ":" + strconv.Itoa(c.SessionPort()),
-			Password:  c.SessionPassword(),
-			DB:        c.SessionDB(),
+		db, _ := strconv.Atoi(cfg.Database)
+		sessionProvider := redis.New(redis.Config{
+			Host:     cfg.Host,
+			Port:     cfg.Port,
+			Username: cfg.Username,
+			Password: cfg.Password,
+			Database: db,
 		})
-		if err != nil {
-			fmt.Println("failed to initialized redis session provider:", err.Error())
-			break
-		}
-		provider = sessionProvider
+		storage = sessionProvider
 		break
 	case "sqlite3":
-		sessionProvider, err := sqlite3.New(sqlite3.Config{
-			DBPath:    c.SessionDatabase(),
-			TableName: c.SessionTableName(),
+		sessionProvider := sqlite3.New(sqlite3.Config{
+			Database:   cfg.Database,
+			Table:      cfg.Table,
+			GCInterval: cfg.GCInterval,
 		})
-		if err != nil {
-			fmt.Println("failed to initialized sqlite3 session provider:", err.Error())
-			break
-		}
-		provider = sessionProvider
+		storage = sessionProvider
 		break
 	}
 
 	return session.Config{
-		Lookup:     c.SessionLookup(),
-		Secure:     c.SessionSecure(),
-		Domain:     c.SessionDomain(),
-		SameSite:   c.SessionSameSite(),
-		Expiration: c.SessionExpiration(),
-		Provider:   provider,
-		GCInterval: c.SessionGCInterval(),
+		KeyLookup:      cfg.KeyLookup,
+		CookieSecure:   cfg.CookieSecure,
+		CookieDomain:   cfg.CookieDomain,
+		CookieSameSite: cfg.CookieSameSite,
+		CookiePath:     cfg.CookiePath,
+		Expiration:     cfg.Expiration,
+		Storage:        storage,
+
 	}
 }
 
@@ -589,8 +602,9 @@ func NewConfig(ctx *cli.Context) *Config {
 	initLogger(ctx.Bool("debug"))
 
 	c := &Config{
-		options: NewOptions(ctx),
-		token:   rnd.Token(8),
+		options:      NewOptions(ctx),
+		token:        rnd.Token(8),
+		errorHandler: defaultErrorHandler,
 	}
 
 	if configFile := c.ConfigFile(); c.options.ConfigFile == "" && fs.FileExists(configFile) {
@@ -622,7 +636,6 @@ func (c *Config) Propagate() {
 	//entity.GeoApi = c.GeoApi()
 
 	c.Settings().Propagate()
-	c.Hub().Propagate()
 }
 
 // Init creates directories, parses additional config files, opens a database
@@ -648,8 +661,6 @@ func (c *Config) Init() error {
 	}
 
 	c.initSettings()
-	c.initHub()
-	c.initFiber()
 
 	c.Propagate()
 
@@ -943,86 +954,43 @@ func (c *Config) GeoApi() string {
 	return "places"
 }
 
-// UpdateHub updates backend api credentials for maps & places.
-func (c *Config) UpdateHub() {
-	if err := c.hub.Refresh(); err != nil {
-		log.Debugf("config: %s", err)
-	} else if err := c.hub.Save(); err != nil {
-		log.Debugf("config: %s", err)
-	} else {
-		c.hub.Propagate()
-	}
-}
-
-// initHub initializes GOSH hub config.
-func (c *Config) initHub() {
-	c.hub = hub.NewConfig(c.Version(), c.HubConfigFile(), c.serial)
-
-	if err := c.hub.Load(); err == nil {
-		// Do nothing.
-	} else if err := c.hub.Refresh(); err != nil {
-		log.Debugf("config: %s", err)
-	} else if err := c.hub.Save(); err != nil {
-		log.Debugf("config: %s", err)
-	}
-
-	c.hub.Propagate()
-
-	ticker := time.NewTicker(time.Hour * 24)
-
-	go func() {
-		for {
-			select {
-			case <-ticker.C:
-				c.UpdateHub()
-			}
+func (c *Config) AccessLogger() *AccessLoggerConfig {
+	if c.options.AccessLoggerConfig == nil {
+		c.options.AccessLoggerConfig = &AccessLoggerConfig{
+			Enabled:     true,
+			Type:        "console",
+			Environment: "",
+			Filename:    "access.log",
+			MaxSize:     500,
+			MaxAge:      28,
+			MaxBackups:  3,
+			LocalTime:   false,
+			Compress:    false,
 		}
-	}()
-}
-
-// Hub returns the Gosh ESP hub config.
-func (c *Config) Hub() *hub.Config {
-	if c.hub == nil {
-		c.initHub()
 	}
-
-	return c.hub
+	return c.options.AccessLoggerConfig
 }
 
-func (c *Config) AccessLoggerEnabled() bool {
-	return c.options.AccessLoggerEnabled
-}
-
-func (c *Config) AccessLoggerType() string {
-	return c.options.AccessLoggerType
-}
-
-func (c *Config) Environment() string {
-	return c.options.Environment
-}
-
-func (c *Config) AccessLoggerFilename() string {
-	return c.options.AccessLoggerFilename
-}
-
-func (c *Config) AccessLoggerMaxsize() int {
-	return c.options.AccessLoggerMaxsize
-}
-
-func (c *Config) AccessLoggerMaxAge() int {
-	return c.options.AccessLoggerMaxAge
-}
-
-func (c *Config) AccessLoggerMaxBackups() int {
-	return c.options.AccessLoggerMaxBackups
-}
-
-func (c *Config) AccessLoggerLocalTime() bool {
-	return c.options.AccessLoggerLocalTime
-}
-
-func (c *Config) AccessLoggerCompress() bool {
-	return c.options.AccessLoggerCompress
+func (c *Config) Session() *SessionConfig {
+	if c.options.SessionConfig == nil {
+		c.options.SessionConfig = &SessionConfig{
+			Provider:       "postgres",
+			KeyLookup:      "cookie:session_id",
+			Database:       "esp_db",
+			Table:          "sessions",
+			Host:           "localhost",
+			Port:           5432,
+			Username:       "esp",
+			Password:       "Pentinum#1",
+			CookieDomain:   "",
+			CookieSameSite: "Lax",
+			Expiration:     12 * time.Hour,
+			GCInterval:     1 * time.Minute,
+			KeyPrefix:      "sessions",
+			CookieSecure:   false,
+		}
+	}
+	return c.options.SessionConfig
 }
 
 func (c *Config) ForceHTTPS() bool {
@@ -1053,8 +1021,8 @@ func (c *Config) SuppressWWW() bool {
 	return c.options.SuppressWWW
 }
 
-func (c *Config) FiberRecoverEnabled() bool {
-	return c.options.FiberRecoverEnabled
+func (c *Config) FiberRecoverDisabled() bool {
+	return c.options.FiberRecoverDisabled
 }
 
 func (c *Config) FiberCacheEnabled() bool {
@@ -1185,14 +1153,29 @@ func (c *Config) FiberRequestIDContextKey() string {
 	return c.options.FiberRequestIDContextKey
 }
 
+func (c *Config) HasherDriver() *HasherConfig {
+	if c.options.HasherDriver == nil {
+		c.options.HasherDriver = &HasherConfig{
+			Driver:      "argon2id",
+			Rounds:      bcrypt.DefaultRounds,
+			Memory:      131072,
+			SaltLength:  16,
+			KeyLength:   32,
+			Iterations:  4,
+			Parallelism: 4,
+		}
+	}
+	return c.options.HasherDriver
+}
+
 var defaultErrorHandler = func(c *fiber.Ctx, err error) error {
 	// Status code defaults to 500
 	code := fiber.StatusInternalServerError
 
 	// Set error message
 	message := err.Error()
-
-	// Check if it's a fiber.Error type
+	//
+	//// Check if it's a fiber.Error type
 	if e, ok := err.(*fiber.Error); ok {
 		code = e.Code
 		message = e.Message
@@ -1200,14 +1183,12 @@ var defaultErrorHandler = func(c *fiber.Ctx, err error) error {
 
 	// TODO: Check return type for the client, JSON, HTML, YAML or any other (API vs web)
 
-	// Return HTTP response
-	c.Set(fiber.HeaderContentType, fiber.MIMETextPlainCharsetUTF8)
-	c.Status(code)
+	return c.Status(code).JSON(fiber.Map{"message": message})
 
 	// Render default error view
-	err = c.Render("errors/"+strconv.Itoa(code), fiber.Map{"message": message})
-	if err != nil {
-		return c.SendString(message)
-	}
-	return err
+	//err = c.Render("errors/"+strconv.Itoa(code), fiber.Map{"message": message})
+	//if err != nil {
+	//	return c.SendString(message)
+	//}
+	//return err
 }

@@ -150,7 +150,7 @@ func (c *Config) Refresh() (err error) {
 		return err
 	}
 
-	req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("Content-ClientType", "application/json")
 
 	var r *http.Response
 

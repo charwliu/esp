@@ -14,7 +14,7 @@ type Base struct {
 	DeletedAt gorm.DeletedAt `sql:"index" json:"deleted_at"`
 }
 
-func (base *Base) BeforeCreate(scope *gorm.DB) error {
+func (base *Base) BeforeCreate(*gorm.DB) error {
 	if base.ID == nil {
 		id := uuid.New()
 		base.ID = &id

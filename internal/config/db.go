@@ -20,6 +20,8 @@ import (
 
 	"go.vixal.xyz/esp/internal/entity"
 	"go.vixal.xyz/esp/internal/mutex"
+
+	_ "github.com/lib/pq"
 )
 
 var dsnPattern = regexp.MustCompile(
@@ -287,7 +289,7 @@ func (c *Config) connectDB() error {
 	var err error
 	var i int
 	for {
-		switch c.DatabaseDriver() {
+		switch dbDriver {
 		case MySQL, MariaDB:
 			db, err = gorm.Open(mysql.Open(dbDsn),
 				&gorm.Config{Logger: logger.Default.LogMode(logger.Silent)},
@@ -295,7 +297,7 @@ func (c *Config) connectDB() error {
 			break
 		case Postgres:
 			db, err = gorm.Open(postgres.Open(dbDsn),
-				&gorm.Config{Logger: logger.Default.LogMode(logger.Silent)},
+				&gorm.Config{Logger: logger.Default.LogMode(logger.Info)},
 			)
 			break
 		case SQLite:

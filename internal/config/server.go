@@ -66,7 +66,7 @@ func (c *Config) TemplateName() string {
 		}
 	}
 
-	return "index.tmpl"
+	return "index.html"
 }
 
 // StaticPath returns the static asset's path.
@@ -76,10 +76,10 @@ func (c *Config) StaticPath() string {
 
 // BuildPath returns the static build path.
 func (c *Config) BuildPath() string {
-	return filepath.Join(c.StaticPath(), "build")
+	return filepath.Join(c.AssetsPath(), "build")
 }
 
 // ImgPath returns the static image path.
 func (c *Config) ImgPath() string {
-	return filepath.Join(c.StaticPath(), "img")
+	return filepath.Join(c.AssetsPath(), "img")
 }

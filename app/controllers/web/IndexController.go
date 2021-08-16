@@ -1,43 +1,47 @@
 package web
 
 import (
-	"log"
-
 	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/session/v2"
-	"go.uber.org/zap"
-	"gorm.io/gorm"
+
+	"go.vixal.xyz/esp/internal/event"
 )
 
-func Index(sess *session.Session, db *gorm.DB) fiber.Handler {
-	return func(ctx *fiber.Ctx) error {
-		auth := IsAuthenticated(sess, ctx)
+var log = event.Log.Sugar()
 
-		// Bind data to template
-		bind := fiber.Map{
-			"name": "Fiber",
-			"auth": auth,
-		}
+func Index(router fiber.Router) {
+	router.Get("/", func(ctx *fiber.Ctx) error {
 
-		if auth {
-			store := sess.Get(ctx)
-			// Get User ID from sess store
-			userID, _ := store.Get("userid").(int64)
-			user, err := FindUserByID(db, userID)
-			if err != nil {
-				log.Fatalf("Error when finding user by ID: %v", err)
-			}
-			bind["username"] = user.Name
-		}
-
-		// Render template
-		err := ctx.Render("index", bind)
-		if err != nil {
-			err2 := ctx.Status(500).SendString(err.Error())
-			if err2 != nil {
-				zap.L().Error(err2.Error())
-			}
-		}
-		return err
-	}
+		//sess := api.Session(ctx)
+		//// Bind data to template
+		//bind := fiber.Map{
+		//	"name": "Fiber",
+		//}
+		//if sess == nil {
+		//	return api.InvalidCredentials()
+		//}
+		//
+		//// Get User ID from sess store
+		//userID, ok := sess.Get("userid").(string)
+		//if !ok {
+		//	return api.InvalidCredentials()
+		//}
+		//if err := api.Auth(sess, acl.ResourceDefault, acl.ActionRead); err != nil {
+		//	return err
+		//}
+		//user := entity.FindUserByUID(userID)
+		//if user == nil {
+		//	return api.InvalidCredentials()
+		//}
+		//bind["username"] = user.UserName
+		////bind["auth"] = user.Role()
+		//// Render template
+		//err := ctx.Render("index")
+		//if err != nil {
+		//	err2 := ctx.Status(500).SendString(err.Error())
+		//	if err2 != nil {
+		//		log.Error(err2)
+		//	}
+		//}
+		return nil
+	})
 }

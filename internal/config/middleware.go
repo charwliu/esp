@@ -1,7 +1,8 @@
 package config
 
 type AccessLoggerConfig struct {
-	Type        string `yaml:"Type"`
+	Enabled     bool   `yaml:"Enabled"`
+	Type        string `yaml:"ClientType"`
 	Environment string `yaml:"Environment"`
 	Filename    string `yaml:"Filename"`
 	MaxSize     int    `yaml:"MaxSize"`

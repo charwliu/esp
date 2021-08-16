@@ -2,24 +2,20 @@
 /* eslint-disable @typescript-eslint/no-unused-expressions */
 import * as fs from 'fs';
 import * as path from 'path';
-import { stringify } from 'qs';
+
+import {stringify} from 'qs';
 // eslint-disable-next-line import/no-extraneous-dependencies
 import * as morph from 'ts-morph';
 
-import {
-    API_DIR as API_DIR_CONST,
-    GENERATOR_ENTITY_ALLIAS,
-} from '../../consts';
-import { toCamel, capitalize, schemaParamParser } from './utils';
-
+import {API_DIR as API_DIR_CONST, GENERATOR_ENTITY_ALLIAS} from '../../consts';
+import {capitalize, schemaParamParser, toCamel} from './utils';
 
 const API_DIR = path.resolve(API_DIR_CONST);
 if (!fs.existsSync(API_DIR)) {
     fs.mkdirSync(API_DIR);
 }
 
-const { Project, QuoteKind } = morph;
-
+const {Project, QuoteKind} = morph;
 
 class ApiGenerator {
     project = new Project({
@@ -54,9 +50,19 @@ class ApiGenerator {
         Object.keys(this.paths).forEach((pathKey) => {
             Object.keys(this.paths[pathKey]).forEach((method) => {
                 const {
-                    tags, operationId, parameters, responses, requestBody, security,
+                    tags,
+                    operationId,
+                    parameters,
+                    responses,
+                    requestBody,
+                    security,
                 } = this.paths[pathKey][method];
-                const controller = toCamel((tags ? tags[0] : pathKey.split('/')[1]).replace('-controller', ''));
+                const controller = toCamel(
+                    (tags ? tags[0] : pathKey.split('/')[1]).replace(
+                        '-controller',
+                        '',
+                    ),
+                );
 
                 if (this.controllers[controller]) {
                     this.controllers[controller][operationId] = {
@@ -68,14 +74,16 @@ class ApiGenerator {
                         pathKey: pathKey.replace(/{/g, '${'),
                     };
                 } else {
-                    this.controllers[controller] = { [operationId]: {
-                        parameters,
-                        responses,
-                        method,
-                        requestBody,
-                        security,
-                        pathKey: pathKey.replace(/{/g, '${'),
-                    } };
+                    this.controllers[controller] = {
+                        [operationId]: {
+                            parameters,
+                            responses,
+                            method,
+                            requestBody,
+                            security,
+                            pathKey: pathKey.replace(/{/g, '${'),
+                        },
+                    };
                 }
             });
         });
@@ -105,38 +113,52 @@ class ApiGenerator {
         });
 
         // get operations of controller
-        const controllerOperations = this.controllers[cName]; 
+        const controllerOperations = this.controllers[cName];
         const operationList = Object.keys(controllerOperations).sort();
         // for each operation add fetcher
         operationList.forEach((operation) => {
             const {
-                requestBody, responses, parameters, method, pathKey, security,
+                requestBody,
+                responses,
+                parameters,
+                method,
+                pathKey,
+                security,
             } = controllerOperations[operation];
 
             const queryParams: any[] = []; // { name, type }
             const bodyParam: any[] = []; // { name, type }
 
-            let hasResponseBodyType: /* boolean | ReturnType<schemaParamParser> */ false | [string, boolean, boolean, boolean, boolean] = false;
+            let hasResponseBodyType: /* boolean | ReturnType<schemaParamParser> */
+                | false
+                | [string, boolean, boolean, boolean, boolean] = false;
             let contentType = '';
             if (parameters) {
                 parameters.forEach((p: any) => {
                     const [
-                        pType, isArray, isClass, isImport,
+                        pType,
+                        isArray,
+                        isClass,
+                        isImport,
                     ] = schemaParamParser(p.schema, this.openapi);
 
                     if (isImport) {
-                        importEntities.push({ type: pType, isClass });
+                        importEntities.push({type: pType, isClass});
                     }
                     if (p.in === 'query') {
                         queryParams.push({
-                            name: p.name, type: `${pType}${isArray ? '[]' : ''}`, hasQuestionToken: !p.required });
+                            name: p.name,
+                            type: `${pType}${isArray ? '[]' : ''}`,
+                            hasQuestionToken: !p.required,
+                        });
                     }
                 });
             }
             if (queryParams.length > 0) {
                 const imp = apiFile.getImportDeclaration((i) => {
                     return i.getModuleSpecifierValue() === 'qs';
-                }); if (!imp) {
+                });
+                if (!imp) {
                     apiFile.addImportDeclaration({
                         moduleSpecifier: 'qs',
                         defaultImport: 'qs',
@@ -145,32 +167,48 @@ class ApiGenerator {
             }
             if (requestBody) {
                 let content = requestBody.content;
-                const { $ref }: { $ref: string } = requestBody;
+                const {$ref}: {$ref: string} = requestBody;
 
                 if (!content && $ref) {
                     const name = $ref.split('/').pop() as string;
-                    content = this.openapi.components.requestBodies[name].content;
+                    content = this.openapi.components.requestBodies[name]
+                        .content;
                 }
-                
+
                 [contentType] = Object.keys(content);
                 const data = content[contentType];
 
-                const [
-                    pType, isArray, isClass, isImport,
-                ] = schemaParamParser(data.schema, this.openapi);
+                const [pType, isArray, isClass, isImport] = schemaParamParser(
+                    data.schema,
+                    this.openapi,
+                );
 
                 if (isImport) {
-                    importEntities.push({ type: pType, isClass });
-                    bodyParam.push({ name: pType.toLowerCase(), type: `${isClass ? 'I' : ''}${pType}${isArray ? '[]' : ''}`, isClass, pType });
+                    importEntities.push({type: pType, isClass});
+                    bodyParam.push({
+                        name: pType.toLowerCase(),
+                        type: `${isClass ? 'I' : ''}${pType}${
+                            isArray ? '[]' : ''
+                        }`,
+                        isClass,
+                        pType,
+                    });
                 } else {
-                    bodyParam.push({ name: 'data', type: `${pType}${isArray ? '[]' : ''}` });
-                    
+                    bodyParam.push({
+                        name: 'data',
+                        type: `${pType}${isArray ? '[]' : ''}`,
+                    });
                 }
             }
-            if (responses['200']) {
-                const { content, headers } = responses['200'];
-                if (content && (content['*/*'] || content['application/json'])) {
-                    const { schema, examples } = content['*/*'] || content['application/json'];
+            const resp = responses['200'] || responses['201'];
+            if (resp) {
+                const {content, headers} = resp;
+                if (
+                    content &&
+                    (content['*/*'] || content['application/json'])
+                ) {
+                    const {schema, examples} =
+                        content['*/*'] || content['application/json'];
 
                     if (!schema) {
                         process.exit(0);
@@ -180,7 +218,7 @@ class ApiGenerator {
                     const [pType, , isClass, isImport] = propType;
 
                     if (isImport) {
-                        importEntities.push({ type: pType, isClass });
+                        importEntities.push({type: pType, isClass});
                     }
                     hasResponseBodyType = propType;
                 }
@@ -188,25 +226,29 @@ class ApiGenerator {
             let returnType = '';
             if (hasResponseBodyType) {
                 const [pType, isArray, isClass] = hasResponseBodyType as any;
-                let data = `Promise<${isClass ? 'I' : ''}${pType}${isArray ? '[]' : ''}`;
+                let data = `Promise<${isClass ? 'I' : ''}${pType}${
+                    isArray ? '[]' : ''
+                }`;
                 returnType = data;
             } else {
                 returnType = 'Promise<number';
-            } 
-            const shouldValidate = bodyParam.filter(b => b.isClass);
+            }
+            const shouldValidate = bodyParam.filter((b) => b.isClass);
             if (shouldValidate.length > 0) {
                 returnType += ' | string[]';
             }
             // append Error to default type return;
             returnType += ' | Error>';
-
             const fetcher = apiClass.addMethod({
                 isAsync: true,
                 isStatic: true,
                 name: operation,
                 returnType,
             });
-            const params = [...queryParams, ...bodyParam].sort((a, b) => (Number(!!a.hasQuestionToken) - Number(!!b.hasQuestionToken)));
+            const params = [...queryParams, ...bodyParam].sort(
+                (a, b) =>
+                    Number(!!a.hasQuestionToken) - Number(!!b.hasQuestionToken),
+            );
             fetcher.addParameters(params);
 
             fetcher.setBodyText((w) => {
@@ -219,11 +261,15 @@ class ApiGenerator {
                     if (shouldValidate.length > 0) {
                         w.writeLine(`const haveError: string[] = [];`);
                         shouldValidate.forEach((b) => {
-                            w.writeLine(`const ${b.name}Valid = new ${b.pType}(${b.name});`);
-                            w.writeLine(`haveError.push(...${b.name}Valid.validate());`);
+                            w.writeLine(
+                                `const ${b.name}Valid = new ${b.pType}(${b.name});`,
+                            );
+                            w.writeLine(
+                                `haveError.push(...${b.name}Valid.validate());`,
+                            );
                         });
                         w.writeLine(`if (haveError.length > 0) {`);
-                        w.writeLine(`    return Promise.resolve(haveError);`)
+                        w.writeLine(`    return Promise.resolve(haveError);`);
                         w.writeLine(`}`);
                     }
                 }
@@ -234,9 +280,13 @@ class ApiGenerator {
                         w.writeLine(`    ${q.name}: ${q.name},`);
                     });
                     w.writeLine('}');
-                    w.writeLine(`return await fetch(\`${this.serverUrl}${pathKey}?\${qs.stringify(queryParams, { arrayFormat: 'comma' })}\`, {`);
+                    w.writeLine(
+                        `return await fetch(\`${this.serverUrl}${pathKey}?\${qs.stringify(queryParams, { arrayFormat: 'comma' })}\`, {`,
+                    );
                 } else {
-                    w.writeLine(`return await fetch(\`${this.serverUrl}${pathKey}\`, {`);
+                    w.writeLine(
+                        `return await fetch(\`${this.serverUrl}${pathKey}\`, {`,
+                    );
                 }
                 // Add method
                 w.writeLine(`    method: '${method.toUpperCase()}',`);
@@ -253,7 +303,15 @@ class ApiGenerator {
                             w.writeLine('    body: params,');
                             break;
                         default:
-                            w.writeLine(`    body: JSON.stringify(${bodyParam.map((b) => b.isClass ? `${b.name}Valid.serialize()` : b.name).join(', ')}),`);
+                            w.writeLine(
+                                `    body: JSON.stringify(${bodyParam
+                                    .map((b) =>
+                                        b.isClass
+                                            ? `${b.name}Valid.serialize()`
+                                            : b.name,
+                                    )
+                                    .join(', ')}),`,
+                            );
                             break;
                     }
                 }
@@ -280,27 +338,29 @@ class ApiGenerator {
         const imports: any[] = [];
         const types: string[] = [];
         importEntities.forEach((i) => {
-            const { type } = i;
+            const {type} = i;
             if (!types.includes(type)) {
                 imports.push(i);
                 types.push(type);
             }
         });
-        imports.sort((a,b) => a.type > b.type ? 1 : -1).forEach((ie) => {
-            const { type: pType, isClass } = ie;
-            if (isClass) {
-                apiFile.addImportDeclaration({
-                    moduleSpecifier: `${GENERATOR_ENTITY_ALLIAS}${pType}`,
-                    defaultImport: pType,
-                    namedImports: [`I${pType}`],
-                });
-            } else {
-                apiFile.addImportDeclaration({
-                    moduleSpecifier: `${GENERATOR_ENTITY_ALLIAS}${pType}`,
-                    namedImports: [pType],
-                });
-            }
-        });
+        imports
+            .sort((a, b) => (a.type > b.type ? 1 : -1))
+            .forEach((ie) => {
+                const {type: pType, isClass} = ie;
+                if (isClass) {
+                    apiFile.addImportDeclaration({
+                        moduleSpecifier: `${GENERATOR_ENTITY_ALLIAS}${pType}`,
+                        defaultImport: pType,
+                        namedImports: [`I${pType}`],
+                    });
+                } else {
+                    apiFile.addImportDeclaration({
+                        moduleSpecifier: `${GENERATOR_ENTITY_ALLIAS}${pType}`,
+                        namedImports: [pType],
+                    });
+                }
+            });
 
         this.apis.push(apiFile);
     };
@@ -311,6 +371,5 @@ class ApiGenerator {
         });
     };
 }
-
 
 export default ApiGenerator;

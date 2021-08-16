@@ -2,7 +2,6 @@ package config
 
 import (
 	"strings"
-	"time"
 
 	"go.vixal.xyz/esp/pkg/fs"
 	"go.vixal.xyz/esp/pkg/txt"
@@ -10,50 +9,40 @@ import (
 
 // ClientConfig represents HTTP client / Web UI config options.
 type ClientConfig struct {
-	Mode            string   `json:"mode"`
-	Name            string   `json:"name"`
-	Version         string   `json:"version"`
-	Copyright       string   `json:"copyright"`
-	Flags           string   `json:"flags"`
-	BaseUri         string   `json:"baseUri"`
-	StaticUri       string   `json:"staticUri"`
-	ApiUri          string   `json:"apiUri"`
-	ContentUri      string   `json:"contentUri"`
-	SiteUrl         string   `json:"siteUrl"`
-	SitePreview     string   `json:"sitePreview"`
-	SiteTitle       string   `json:"siteTitle"`
-	SiteCaption     string   `json:"siteCaption"`
-	SiteDescription string   `json:"siteDescription"`
-	SiteAuthor      string   `json:"siteAuthor"`
-	Debug           bool     `json:"debug"`
-	Test            bool     `json:"test"`
-	Demo            bool     `json:"demo"`
-	Sponsor         bool     `json:"sponsor"`
-	ReadOnly        bool     `json:"readonly"`
-	UploadNSFW      bool     `json:"uploadNSFW"`
-	Public          bool     `json:"public"`
-	Experimental    bool     `json:"experimental"`
-	AlbumCategories []string `json:"albumCategories"`
-	//Albums          []entity.Album      `json:"albums"`
-	//Cameras         []entity.Camera     `json:"cameras"`
-	//Lenses          []entity.Lens       `json:"lenses"`
-	//Countries       []entity.Country    `json:"countries"`
-	Status        string              `json:"status"`
-	MapKey        string              `json:"mapKey"`
-	DownloadToken string              `json:"downloadToken"`
-	PreviewToken  string              `json:"previewToken"`
-	JSHash        string              `json:"jsHash"`
-	CSSHash       string              `json:"cssHash"`
-	ManifestHash  string              `json:"manifestHash"`
-	Settings      Settings            `json:"settings"`
-	Disable       ClientDisable       `json:"disable"`
-	Count         ClientCounts        `json:"count"`
-	Pos           ClientPosition      `json:"pos"`
-	Years         []int               `json:"years"`
-	Colors        []map[string]string `json:"colors"`
-	Categories    []CategoryLabel     `json:"categories"`
-	Clip          int                 `json:"clip"`
-	Server        RuntimeInfo         `json:"server"`
+	Mode            string   `json:"mode,omitempty"`
+	Name            string   `json:"name,omitempty"`
+	Version         string   `json:"version,omitempty"`
+	Copyright       string   `json:"copyright,omitempty"`
+	Flags           string   `json:"flags,omitempty"`
+	BaseUri         string   `json:"baseUri,omitempty"`
+	StaticUri       string   `json:"staticUri,omitempty"`
+	ApiUri          string   `json:"apiUri,omitempty"`
+	ContentUri      string   `json:"contentUri,omitempty"`
+	SiteUrl         string   `json:"siteUrl,omitempty"`
+	SitePreview     string   `json:"sitePreview,omitempty"`
+	SiteTitle       string   `json:"siteTitle,omitempty"`
+	SiteCaption     string   `json:"siteCaption,omitempty"`
+	SiteDescription string   `json:"siteDescription,omitempty"`
+	SiteAuthor      string   `json:"siteAuthor,omitempty"`
+	Debug           bool     `json:"debug,omitempty"`
+	Test            bool     `json:"test,omitempty"`
+	Demo            bool     `json:"demo,omitempty"`
+	Sponsor         bool     `json:"sponsor,omitempty"`
+	ReadOnly        bool     `json:"readonly,omitempty"`
+	Public          bool     `json:"public,omitempty"`
+	Experimental    bool     `json:"experimental,omitempty"`
+	DownloadToken string              `json:"downloadToken,omitempty"`
+	PreviewToken  string              `json:"previewToken,omitempty"`
+	JSHash        string              `json:"jsHash,omitempty"`
+	CSSHash       string              `json:"cssHash,omitempty"`
+	ManifestHash  string              `json:"manifestHash,omitempty"`
+	Settings      Settings            `json:"settings,omitempty"`
+	Disable       ClientDisable       `json:"disable,omitempty"`
+	Years         []int               `json:"years,omitempty"`
+	Colors        []map[string]string `json:"colors,omitempty"`
+	Categories    []CategoryLabel     `json:"categories,omitempty"`
+	Clip          int                 `json:"clip,omitempty"`
+	Server        RuntimeInfo         `json:"server,omitempty"`
 }
 
 // ClientDisable represents disabled client features a user can't turn back on.
@@ -71,43 +60,13 @@ type ClientDisable struct {
 	TensorFlow  bool `json:"tensorflow"`
 }
 
-// ClientCounts represents photo, video and album counts for the client UI.
-type ClientCounts struct {
-	All            int `json:"all"`
-	Photos         int `json:"photos"`
-	Videos         int `json:"videos"`
-	Cameras        int `json:"cameras"`
-	Lenses         int `json:"lenses"`
-	Countries      int `json:"countries"`
-	Hidden         int `json:"hidden"`
-	Favorites      int `json:"favorites"`
-	Private        int `json:"private"`
-	Review         int `json:"review"`
-	Stories        int `json:"stories"`
-	Albums         int `json:"albums"`
-	Moments        int `json:"moments"`
-	Months         int `json:"months"`
-	Folders        int `json:"folders"`
-	Files          int `json:"files"`
-	Places         int `json:"places"`
-	States         int `json:"states"`
-	Labels         int `json:"labels"`
-	LabelMaxPhotos int `json:"labelMaxPhotos"`
-}
 
 type CategoryLabel struct {
 	LabelUID   string `json:"UID"`
 	CustomSlug string `json:"Slug"`
-	LabelName  string `json:"Name"`
+	LabelName  string `json:"UserName"`
 }
 
-type ClientPosition struct {
-	PhotoUID string    `json:"uid"`
-	CellID   string    `json:"cid"`
-	TakenAt  time.Time `json:"utc"`
-	PhotoLat float64   `json:"lat"`
-	PhotoLng float64   `json:"lng"`
-}
 
 // Flags returns config flags as string slice.
 func (c *Config) Flags() (flags []string) {
@@ -188,8 +147,6 @@ func (c *Config) PublicConfig() ClientConfig {
 		ReadOnly:        c.ReadOnly(),
 		Public:          c.Public(),
 		Experimental:    c.Experimental(),
-		Status:          "",
-		MapKey:          "",
 		JSHash:          fs.Checksum(c.BuildPath() + "/app.js"),
 		CSSHash:         fs.Checksum(c.BuildPath() + "/app.css"),
 		ManifestHash:    fs.Checksum(c.TemplatesPath() + "/manifest.json"),
@@ -247,8 +204,6 @@ func (c *Config) GuestConfig() ClientConfig {
 		ReadOnly:        true,
 		Public:          true,
 		Experimental:    false,
-		Status:          c.Hub().Status,
-		MapKey:          c.Hub().MapKey(),
 		DownloadToken:   c.DownloadToken(),
 		PreviewToken:    c.PreviewToken(),
 		JSHash:          fs.Checksum(c.BuildPath() + "/share.js"),
@@ -292,8 +247,6 @@ func (c *Config) UserConfig() ClientConfig {
 		ReadOnly:        c.ReadOnly(),
 		Public:          c.Public(),
 		Experimental:    c.Experimental(),
-		Status:          c.Hub().Status,
-		MapKey:          c.Hub().MapKey(),
 		DownloadToken:   c.DownloadToken(),
 		PreviewToken:    c.PreviewToken(),
 		JSHash:          fs.Checksum(c.BuildPath() + "/app.js"),
@@ -303,111 +256,7 @@ func (c *Config) UserConfig() ClientConfig {
 		Server:          NewRuntimeInfo(),
 	}
 
-	c.DB().
-		Table("photos").
-		Select("photo_uid, cell_id, photo_lat, photo_lng, taken_at").
-		Where("deleted_at IS NULL AND photo_lat != 0 AND photo_lng != 0").
-		Order("taken_at DESC").
-		Limit(1).Offset(0).
-		Take(&result.Pos)
 
-	c.DB().
-		Table("cameras").
-		Where("camera_slug <> 'zz' AND camera_slug <> ''").
-		Select("COUNT(*) AS cameras").
-		Take(&result.Count)
-
-	c.DB().
-		Table("lenses").
-		Where("lens_slug <> 'zz' AND lens_slug <> ''").
-		Select("COUNT(*) AS lenses").
-		Take(&result.Count)
-
-	c.DB().
-		Table("photos").
-		Select("SUM(photo_type = 'video' AND photo_quality >= 0 AND photo_private = 0) AS videos, SUM(photo_type IN ('image','raw','live') AND photo_quality < 3 AND photo_quality >= 0 AND photo_private = 0) AS review, SUM(photo_quality = -1) AS hidden, SUM(photo_type IN ('image','raw','live') AND photo_private = 0 AND photo_quality >= 0) AS photos, SUM(photo_favorite = 1 AND photo_private = 0 AND photo_quality >= 0) AS favorites, SUM(photo_private = 1 AND photo_quality >= 0) AS private").
-		Where("photos.id NOT IN (SELECT photo_id FROM files WHERE file_primary = 1 AND (file_missing = 1 OR file_error <> ''))").
-		Where("deleted_at IS NULL").
-		Take(&result.Count)
-
-	result.Count.All = result.Count.Photos + result.Count.Videos
-
-	//c.DB().
-	//	Table("labels").
-	//	Select("MAX(photo_count) as label_max_photos, COUNT(*) AS labels").
-	//	Where("photo_count > 0").
-	//	Where("deleted_at IS NULL").
-	//	Where("(label_priority >= 0 OR label_favorite = 1)").
-	//	Take(&result.Count)
-	//
-	//c.DB().
-	//	Table("albums").
-	//	Select("SUM(album_type = ?) AS albums, SUM(album_type = ?) AS moments, SUM(album_type = ?) AS months, SUM(album_type = ?) AS states, SUM(album_type = ?) AS folders", entity.AlbumDefault, entity.AlbumMoment, entity.AlbumMonth, entity.AlbumState, entity.AlbumFolder).
-	//	Where("deleted_at IS NULL AND (albums.album_type <> 'folder' OR albums.album_path IN (SELECT photos.photo_path FROM photos WHERE photos.deleted_at IS NULL))").
-	//	Take(&result.Count)
-	//
-	//c.DB().
-	//	Table("files").
-	//	Select("COUNT(*) AS files").
-	//	Where("file_missing = 0").
-	//	Where("deleted_at IS NULL").
-	//	Take(&result.Count)
-	//
-	//c.DB().
-	//	Table("countries").
-	//	Select("(COUNT(*) - 1) AS countries").
-	//	Take(&result.Count)
-	//
-	//c.DB().
-	//	Table("places").
-	//	Select("SUM(photo_count > 0) AS places").
-	//	Where("id != 'zz'").
-	//	Take(&result.Count)
-	//
-	//c.DB().
-	//	Order("country_slug").
-	//	Find(&result.Countries)
-	//
-	//c.DB().
-	//	Where("id IN (SELECT photos.camera_id FROM photos WHERE photos.photo_quality >= 0 OR photos.deleted_at IS NULL)").
-	//	Where("deleted_at IS NULL").
-	//	Limit(10000).Order("camera_slug").
-	//	Find(&result.Cameras)
-	//
-	//c.DB().
-	//	Where("deleted_at IS NULL").
-	//	Limit(10000).Order("lens_slug").
-	//	Find(&result.Lenses)
-	//
-	//c.DB().
-	//	Where("deleted_at IS NULL AND album_favorite = 1").
-	//	Limit(20).Order("album_title").
-	//	Find(&result.Albums)
-	//
-	//c.DB().
-	//	Table("photos").
-	//	Where("photo_year > 0 AND (photos.photo_quality >= 0 OR photos.deleted_at IS NULL)").
-	//	Order("photo_year DESC").
-	//	Pluck("DISTINCT photo_year", &result.Years)
-	//
-	//c.DB().
-	//	Table("categories").
-	//	Select("l.label_uid, l.custom_slug, l.label_name").
-	//	Joins("JOIN labels l ON categories.category_id = l.id").
-	//	Where("l.deleted_at IS NULL").
-	//	Group("l.custom_slug").
-	//	Order("l.custom_slug").
-	//	Limit(1000).Offset(0).
-	//	Scan(&result.Categories)
-	//
-	//c.DB().
-	//	Table("albums").
-	//	Select("album_category").
-	//	Where("deleted_at IS NULL AND album_category <> ''").
-	//	Group("album_category").
-	//	Order("album_category").
-	//	Limit(1000).Offset(0).
-	//	Pluck("album_category", &result.AlbumCategories)
 
 	return result
 }

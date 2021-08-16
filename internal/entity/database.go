@@ -20,7 +20,7 @@ const (
 	Postgres = "postgres"
 )
 
-type Config struct {
+type DBConfig struct {
 	Driver   string
 	Host     string
 	Username string
@@ -121,10 +121,10 @@ type DefaultModel struct {
 	ID        *uuid.UUID     `gorm:"type:uuid;primary_key;default:uuid_generate_v4()" json:"id"`
 	CreatedAt time.Time      `json:"created_at"`
 	UpdatedAt time.Time      `json:"updated_at"`
-	DeletedAt gorm.DeletedAt `sql:"index" json:"deleted_at"`
+	DeletedAt gorm.DeletedAt `gorm:"index" json:"deleted_at"`
 }
 
-func (base *DefaultModel) BeforeCreate(scope *gorm.DB) error {
+func (base *DefaultModel) BeforeCreate(*gorm.DB) error {
 	if base.ID == nil {
 		id := uuid.New()
 		base.ID = &id

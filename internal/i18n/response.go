@@ -2,12 +2,14 @@ package i18n
 
 import (
 	"strings"
+
+	"github.com/gofiber/fiber/v2"
 )
 
 type Response struct {
 	Code    int    `json:"code"`
 	Err     string `json:"error,omitempty"`
-	Msg     string `json:"message,omitempty"`
+	Message string `json:"message,omitempty"`
 	Details string `json:"details,omitempty"`
 }
 
@@ -15,7 +17,7 @@ func (r Response) String() string {
 	if r.Err != "" {
 		return r.Err
 	} else {
-		return r.Msg
+		return r.Message
 	}
 }
 
@@ -32,8 +34,8 @@ func (r Response) Success() bool {
 }
 
 func NewResponse(code int, id Message, params ...interface{}) Response {
-	if code < 400 {
-		return Response{Code: code, Msg: Msg(id, params...)}
+	if code < fiber.StatusBadRequest {
+		return Response{Code: code, Message: Msg(id, params...)}
 	} else {
 		return Response{Code: code, Err: Msg(id, params...)}
 	}

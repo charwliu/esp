@@ -58,6 +58,6 @@ package txt
 
 var Countries = map[string]string{
 {{- range .Countries }}
-	{{ printf "%q" .Name }}: {{ printf "%q" .Code }},
+	{{ printf "%q" .UserName }}: {{ printf "%q" .Code }},
 {{- end }}
 }`))

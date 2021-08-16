@@ -13,21 +13,21 @@ func TestNewResponse(t *testing.T) {
 		resp := NewResponse(http.StatusConflict, ErrAlreadyExists, "A cat")
 		assert.Equal(t, http.StatusConflict, resp.Code)
 		assert.Equal(t, "A cat already exists", resp.Err)
-		assert.Equal(t, "", resp.Msg)
+		assert.Equal(t, "", resp.Message)
 	})
 
 	t.Run("unexpected error", func(t *testing.T) {
 		resp := NewResponse(http.StatusInternalServerError, ErrUnexpected, "A cat")
 		assert.Equal(t, http.StatusInternalServerError, resp.Code)
 		assert.Equal(t, "Unexpected error, please try again", resp.Err)
-		assert.Equal(t, "", resp.Msg)
+		assert.Equal(t, "", resp.Message)
 	})
 
 	t.Run("changes saved", func(t *testing.T) {
 		resp := NewResponse(http.StatusOK, MsgChangesSaved)
 		assert.Equal(t, http.StatusOK, resp.Code)
 		assert.Equal(t, "", resp.Err)
-		assert.Equal(t, "Changes successfully saved", resp.Msg)
+		assert.Equal(t, "Changes successfully saved", resp.Message)
 
 		if s, err := json.Marshal(resp); err != nil {
 			t.Fatal(err)

@@ -55,6 +55,6 @@ package maps
 
 var CountryNames = map[string]string{
 {{- range .Countries }}
-	{{ printf "%q" .Code }}: {{ printf "%q" .Name }},
+	{{ printf "%q" .Code }}: {{ printf "%q" .UserName }},
 {{- end }}
 }`))

@@ -17,7 +17,7 @@ import (
 const blockSize = 8 << 10
 
 // unknownFileMode is a sentinel (and bogus) os.FileMode
-// value used to represent a syscall.DT_UNKNOWN Dirent.Type.
+// value used to represent a syscall.DT_UNKNOWN Dirent.ClientType.
 const unknownFileMode os.FileMode = os.ModeNamedPipe | os.ModeSocket | os.ModeDevice
 
 func readDir(dirName string, fn func(dirName, entName string, typ os.FileMode) error) error {
@@ -49,7 +49,7 @@ func readDir(dirName string, fn func(dirName, entName string, typ os.FileMode) e
 			continue
 		}
 		// Fallback for filesystems (like old XFS) that don't
-		// support Dirent.Type and have DT_UNKNOWN (0) there
+		// support Dirent.ClientType and have DT_UNKNOWN (0) there
 		// instead.
 		if typ == unknownFileMode {
 			fi, err := os.Lstat(dirName + "/" + name)

@@ -1,5 +1,7 @@
-node_modules
-.DS_Store
+.idea
+.vscode
 dist
-dist-ssr
-*.local
+node_modules
+package-lock.json
+yarn.lock
+pnpm-lock.yaml

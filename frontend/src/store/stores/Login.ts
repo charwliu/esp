@@ -1,10 +1,6 @@
-import { flow, makeAutoObservable, observable } from 'mobx';
-import globalApi from 'Apis/global';
-
-import { Store } from 'Store';
-import { errorChecker } from 'Helpers/apiErrors';
-import ProfileInfo, { IProfileInfo } from 'Entities/ProfileInfo';
-import { ILogin } from 'Entities/Login';
+import {IUser} from '@entities/User';
+import {errorChecker} from '@helpers/apiErrors';
+import {flow, makeAutoObservable, observable} from 'mobx';
 
 export default class Login {
     rootStore: Store;
@@ -22,24 +18,13 @@ export default class Login {
         this.checkLoggedIn();
     }
 
-    * checkLoggedIn() {
-        const response :IProfileInfo = yield globalApi.getProfile();
-        const { result } = errorChecker<IProfileInfo>(response);
-        if (result) {
-            this.loggedIn = true;
-            this.rootStore.system.setProfile(new ProfileInfo(result));
-            this.rootStore.init();
-        }
-        // TODO: make smth with result, to not duplicate the request;
+    *checkLoggedIn() {
+        // const response = yield authApi.
+        this.loggedIn = true;
     }
 
-    * login(login: ILogin) {
-        const response : number | string[] | Error = yield globalApi.login(login);
-        const { result, error } = errorChecker(response);
-        if (result === 200) {
-            this.loggedIn = true;
-            return;
-        }
-        return error;
+    *login(login: IUser) {
+        this.loggedIn = true;
+        return true;
     }
 }

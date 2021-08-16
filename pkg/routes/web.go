@@ -4,16 +4,15 @@ import (
 	"log"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/session/v2"
 	hashing "github.com/thomasvvugt/fiber-hashing"
-	"gorm.io/gorm"
 
-	Controller "go.vixal.xyz/esp/app/controllers/web"
+	. "go.vixal.xyz/esp/app/controllers/api"
 )
 
-func RegisterWeb(web fiber.Router, session *session.Session, sessionLookup string, db *gorm.DB, hasher hashing.Driver) {
+func RegisterWeb(web fiber.Router, hasher hashing.Driver) {
 	// Homepage
-	web.Get("/", Controller.Index(session, db))
+	// GET /
+	//Controller.Index(web)
 
 	// Panic test route, this brings up an error
 	web.Get("/panic", func(ctx *fiber.Ctx) error {
@@ -37,8 +36,10 @@ func RegisterWeb(web fiber.Router, session *session.Session, sessionLookup strin
 		return err
 	})
 
-	// Auth routes
-	web.Get("/login", Controller.ShowLoginForm())
-	web.Post("/login", Controller.PostLoginForm(hasher, session, db))
-	web.Post("/logout", Controller.PostLogoutForm(sessionLookup, session, db))
+	api := web.Group("/api")
+	apiv1 := api.Group("/v1")
+	ShowLoginForm(apiv1)
+	UserLogin(apiv1)
+	DeleteSession(apiv1)
+	GetCurrentUser(apiv1)
 }

@@ -9,8 +9,6 @@ var CountryFixtures = CountryMap{
 		CountryName:        "Germany",
 		CountryDescription: "Country description",
 		CountryNotes:       "Country Notes",
-		//CountryPhoto:       nil,
-		//CountryPhotoID:     0,
 		New: false,
 	},
 }

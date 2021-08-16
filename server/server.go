@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"fmt"
+	"path/filepath"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cache"
@@ -17,14 +18,13 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/pprof"
 	"github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/gofiber/fiber/v2/middleware/requestid"
-	"github.com/gofiber/session/v2"
+	"github.com/gofiber/fiber/v2/middleware/session"
 	hashing "github.com/thomasvvugt/fiber-hashing"
 
 	"go.uber.org/zap"
 	"gorm.io/gorm"
 
 	configuration "go.vixal.xyz/esp/internal/config"
-	"go.vixal.xyz/esp/internal/entity"
 	"go.vixal.xyz/esp/internal/event"
 	"go.vixal.xyz/esp/pkg/middleware"
 	"go.vixal.xyz/esp/pkg/routes"
@@ -35,14 +35,13 @@ type App struct {
 
 	DB      *gorm.DB
 	Hasher  hashing.Driver
-	Session *session.Session
+	Session *session.Store
 }
 
 func Create(config *configuration.Config) (*App, error) {
 	app := &App{
 		App:     fiber.New(*config.FiberConfig()),
 		Hasher:  hashing.New(config.HasherConfig()),
-		Session: session.New(config.SessionConfig()),
 	}
 
 	app.registerMiddlewares(config)
@@ -51,23 +50,24 @@ func Create(config *configuration.Config) (*App, error) {
 
 	// Register web routes
 	web := app.Group("")
-	routes.RegisterWeb(web, app.Session, config.SessionLookup(), app.DB, app.Hasher)
+	routes.RegisterWeb(web, app.Hasher)
 
 	return app, nil
 }
 
 func (app *App) registerMiddlewares(config *configuration.Config) {
 	// Middleware - Custom Access Logger based on zap
-	if config.AccessLoggerEnabled() {
+	conf := config.AccessLogger()
+	if conf.Enabled {
 		app.Use(middleware.AccessLogger(&middleware.AccessLoggerConfig{
-			Type:        config.AccessLoggerType(),
-			Environment: config.Environment(),
-			Filename:    config.AccessLoggerFilename(),
-			MaxSize:     config.AccessLoggerMaxsize(),
-			MaxAge:      config.AccessLoggerMaxAge(),
-			MaxBackups:  config.AccessLoggerMaxBackups(),
-			LocalTime:   config.AccessLoggerLocalTime(),
-			Compress:    config.AccessLoggerCompress(),
+			Type:        conf.Type,
+			Environment: conf.Environment,
+			Filename:    conf.Filename,
+			MaxSize:     conf.MaxSize,
+			MaxAge:      conf.MaxAge,
+			MaxBackups:  conf.MaxBackups,
+			LocalTime:   conf.LocalTime,
+			Compress:    conf.Compress,
 		}))
 	}
 
@@ -96,7 +96,7 @@ func (app *App) registerMiddlewares(config *configuration.Config) {
 	}
 
 	// Middleware - Recover
-	if config.FiberRecoverEnabled() {
+	if !config.FiberRecoverDisabled() {
 		app.Use(recover.New())
 	}
 
@@ -219,15 +219,20 @@ func Start(ctx context.Context, config *configuration.Config) {
 
 	// Register web routes
 	web := app.Group("")
-	routes.RegisterWeb(web, app.Session, config.SessionLookup(), entity.DB(), app.Hasher)
+	routes.RegisterWeb(web, app.Hasher)
 
 	// Register application API routes (using the /api/v1 group)
 	api := app.Group("/api")
 	apiv1 := api.Group("/v1")
-	routes.RegisterAPI(apiv1, entity.DB())
+	routes.RegisterAPI(apiv1)
 
 	// Register static routes for the public directory
-	app.Static("/", config.AssetsPath())
+	app.Static("/", config.BuildPath())
+	app.Static("/static", config.StaticPath())
+
+	app.Get("/*", func(ctx *fiber.Ctx) error {
+		return ctx.SendFile(filepath.Join(config.BuildPath(), "index.html"))
+	})
 
 	// Custom 404 Handler
 	app.Use(func(c *fiber.Ctx) error {

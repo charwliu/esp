@@ -1,19 +1,35 @@
 {
-  "compilerOptions": {
-    "target": "ESNext",
-    "lib": ["DOM", "DOM.Iterable", "ESNext"],
-    "allowJs": false,
-    "skipLibCheck": false,
-    "esModuleInterop": false,
-    "allowSyntheticDefaultImports": true,
-    "strict": true,
-    "forceConsistentCasingInFileNames": true,
-    "module": "ESNext",
-    "moduleResolution": "Node",
-    "resolveJsonModule": true,
-    "isolatedModules": true,
-    "noEmit": true,
-    "jsx": "react"
-  },
-  "include": ["./src"]
+    "compilerOptions": {
+        "outDir": "./dist",
+        "module": "esnext",
+        "target": "es6",
+        "lib": ["es6", "dom"],
+        "sourceMap": true,
+        "allowJs": true,
+        "jsx": "react",
+        "moduleResolution": "node",
+        "noImplicitReturns": true,
+        "noImplicitThis": true,
+        "noImplicitAny": true,
+        "strictNullChecks": true,
+        "baseUrl": "./",
+        "rootDir": "./",
+        "typeRoots": ["./node_modules/@types", "./src/@types"],
+        "paths": {
+            "@apis/*": ["src/lib/apis/*"],
+            "@entities/*": ["src/lib/entities/*"],
+            "@helpers/*": ["src/lib/helpers/*"],
+            "@src/*": ["src/*"],
+            "@images/*": ["src/images/*"],
+            "@styles/*": ["src/styles/*"],
+            "@components/*": ["src/components/*"],
+            "@store/*": ["src/store/*"]
+        },
+        "allowSyntheticDefaultImports": true,
+        "esModuleInterop": true,
+        "importsNotUsedAsValues": "preserve",
+        "incremental": true
+    },
+    "include": ["src/**/*.ts", "src/**/*.tsx"],
+    "exclude": ["**/node_modules", "**/.*/"]
 }

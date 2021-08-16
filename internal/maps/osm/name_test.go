@@ -9,9 +9,9 @@ import (
 )
 
 func TestOSM_Name(t *testing.T) {
-	t.Run("Nice Name", func(t *testing.T) {
-		l := &Location{LocCategory: "natural", LocName: "Nice Name", LocType: "hill", LocDisplayName: "display name"}
-		assert.Equal(t, "Nice Name", l.Name())
+	t.Run("Nice UserName", func(t *testing.T) {
+		l := &Location{LocCategory: "natural", LocName: "Nice UserName", LocType: "hill", LocDisplayName: "display name"}
+		assert.Equal(t, "Nice UserName", l.Name())
 	})
 
 	t.Run("Water", func(t *testing.T) {
@@ -19,9 +19,9 @@ func TestOSM_Name(t *testing.T) {
 		assert.Equal(t, "Water", l.Name())
 	})
 
-	t.Run("Nice Name 2", func(t *testing.T) {
-		l := &Location{LocCategory: "shop", LocName: "Nice Name 2", LocType: "", LocDisplayName: "display name"}
-		assert.Equal(t, "Nice Name 2", l.Name())
+	t.Run("Nice UserName 2", func(t *testing.T) {
+		l := &Location{LocCategory: "shop", LocName: "Nice UserName 2", LocType: "", LocDisplayName: "display name"}
+		assert.Equal(t, "Nice UserName 2", l.Name())
 	})
 
 	t.Run("Cat", func(t *testing.T) {

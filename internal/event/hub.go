@@ -1,10 +1,7 @@
 package event
 
 import (
-	"sync"
-
 	"github.com/leandro-lugaresi/hub"
-	"go.uber.org/zap"
 
 	"go.vixal.xyz/esp/internal/i18n"
 )
@@ -25,37 +22,23 @@ func SharedHub() *Hub {
 }
 
 func Error(msg string) {
-	once.Do(func() {
-		log = Log.WithOptions(zap.AddCallerSkip(1))
-	})
-	log.Error(msg)
+	Log.Error(msg)
 	Publish("notify.error", Data{"message": msg})
 }
 
 func Success(msg string) {
-	once.Do(func() {
-		log = Log.WithOptions(zap.AddCallerSkip(1))
-	})
-	log.Info(msg)
+	Log.Info(msg)
 	Publish("notify.success", Data{"message": msg})
 }
 
 func Info(msg string) {
-	once.Do(func() {
-		log = Log.WithOptions(zap.AddCallerSkip(1))
-	})
-	log.Info(msg)
+	Log.Info(msg)
 	Publish("notify.info", Data{"message": msg})
 }
 
-var once sync.Once
-var log *zap.Logger
 
 func Warning(msg string) {
-	once.Do(func() {
-		log = Log.WithOptions(zap.AddCallerSkip(1))
-	})
-	log.Warn(msg)
+	Log.Warn(msg)
 	Publish("notify.warning", Data{"message": msg})
 }
 

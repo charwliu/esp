@@ -1,0 +1,1912 @@
+openapi: 3.0.1
+info:
+  title: Identity Manager GE
+  description: >-
+    Identity Manager (IdM) GE API specifications comply with existing standards
+    for authentication and user and provide access information.
+  version: '1.0'
+servers:
+  # Added by API Auto Mocking Plugin
+  - description: SwaggerHub API Auto Mocking
+    url: '/api/v1'
+paths:
+  /oauth2/authorize:
+    post:
+      tags:
+        - oauth2
+      description: >-
+        Handle authorization code and implicit requests
+      operationId: authorize
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Login'
+      responses:
+        '200':
+          description: 'OK.'
+        '400':
+          description: >
+            Invalid username or password.
+        '429':
+          description: >
+            Out of login attempts.
+
+  /auth/tokens:
+    get:
+      tags:
+        - auth
+      summary: Get token info
+      description: >-
+        In order to manage the Identity Manager through the API you must obtain
+        an access token to be included in HTTP headers. There are two methods to
+        obtain an access token.
+      operationId: GetTokenInfo
+      parameters:
+        - name: X-Auth-token
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: X-Subject-token
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        '201':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetTokenInfoResponse'
+      security:
+        - auth: [ ]
+    post:
+      tags:
+        - auth
+      summary: Create token with Token method
+      description: >-
+        In order to manage the Identity Manager through the API you must obtain
+        an access token to be included in HTTP headers. There are two methods to
+        obtain an access token.
+      operationId: CreateTokenWithMethod
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTokenWithTokenMethodRequest'
+        required: true
+      responses:
+        '201':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateTokenWithTokenMethodResponse'
+      security:
+        - auth: [ ]
+    delete:
+      tags:
+        - auth
+      summary: Delete token
+      description: >-
+        In order to manage the Identity Manager through the API you must obtain
+        an access token to be included in HTTP headers. There are two methods to
+        obtain an access token.
+      operationId: DeleteToken
+      parameters:
+        - name: X-Auth-token
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: X-Subject-token
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: ''
+          content: { }
+      security:
+        - auth: [ ]
+  /applications:
+    get:
+      tags:
+        - application
+      summary: List Applications
+      description: Applications are registered in IdM and consume OAuth2 resources.
+      operationId: ListApplications
+      parameters:
+        - name: X-Auth-token
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListApplicationsResponse'
+      security:
+        - auth: [ ]
+    post:
+      tags:
+        - application
+      summary: Create an Application
+      description: Applications are registered in Keyrock and consume OAuth2 resources.
+      operationId: CreateApplication
+      parameters:
+        - name: X-Auth-token
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAnApplicationRequest'
+        required: true
+      responses:
+        '201':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateAnApplicationResponse'
+      security:
+        - auth: [ ]
+  '/applications/:application_id':
+    get:
+      tags:
+        - application
+      summary: Read Application details
+      operationId: ReadApplication
+      parameters:
+        - name: X-Auth-token
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReadApplicationDetailsResponse'
+      security:
+        - auth: [ ]
+    delete:
+      tags:
+        - application
+      summary: Delete an Application
+      operationId: DeleteApplication
+      parameters:
+        - name: X-Auth-token
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: ''
+          content: { }
+      security:
+        - auth: [ ]
+    patch:
+      tags:
+        - application
+      summary: Update an Application
+      operationId: UpdateApplication
+      parameters:
+        - name: X-Auth-token
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateAnApplicationRequest'
+        required: true
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateAnApplicationResponse'
+      security:
+        - auth: [ ]
+  /users:
+    get:
+      tags:
+        - user
+      summary: List Users
+      operationId: ListUsers
+      parameters:
+        - name: X-Auth-token
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListUsersResponse'
+      security:
+        - auth: [ ]
+    post:
+      tags:
+        - user
+      summary: Create a User
+      operationId: CreateUser
+      parameters:
+        - name: X-Auth-token
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAUserRequest'
+        required: true
+      responses:
+        '201':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateAUserResponse'
+      security:
+        - auth: [ ]
+  '/users/:user_id':
+    get:
+      tags:
+        - user
+      summary: Read info about a User
+      operationId: ReadUserInfo
+      parameters:
+        - name: X-Auth-token
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReadInfoAboutAUserResponse'
+      security:
+        - auth: [ ]
+    delete:
+      tags:
+        - user
+      summary: Delete a User
+      operationId: DeleteUser
+      parameters:
+        - name: X-Auth-token
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: ''
+          content: { }
+      security:
+        - auth: [ ]
+    patch:
+      tags:
+        - user
+      summary: Update a User
+      operationId: UpdateUser
+      parameters:
+        - name: X-Auth-token
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateAUserRequest'
+        required: true
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateAUserResponse'
+      security:
+        - auth: [ ]
+  /organizations:
+    get:
+      tags:
+        - organization
+      summary: List Organizations
+      operationId: ListOrganizations
+      parameters:
+        - name: X-Auth-token
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListOrganizationsResponse'
+      security:
+        - auth: [ ]
+    post:
+      tags:
+        - organization
+      summary: Create an Organization
+      operationId: CreateOrganization
+      parameters:
+        - name: X-Auth-token
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAnOrganizationRequest'
+        required: true
+      responses:
+        '201':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateAnOrganizationResponse'
+      security:
+        - auth: [ ]
+  '/organizations/:organization_id':
+    get:
+      tags:
+        - organization
+      summary: Read info about an Organization
+      operationId: ReadOrganizationInfo
+      parameters:
+        - name: X-Auth-token
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReadInfoAboutAnOrganizationResponse'
+      security:
+        - auth: [ ]
+
+    delete:
+      tags:
+        - organization
+      summary: Delete an Organization
+      operationId: DeleteOrganization
+      parameters:
+        - name: X-Auth-token
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: ''
+          content: { }
+      security:
+        - auth: [ ]
+
+    patch:
+      tags:
+        - organization
+      summary: Update an Organization
+      operationId: UpdateOrganization
+      parameters:
+        - name: X-Auth-token
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateAnOrganizationRequest'
+        required: true
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateAnOrganizationResponse'
+      security:
+        - auth: [ ]
+  '/applications/:application_id/roles':
+    get:
+      tags:
+        - application
+      summary: List Roles
+      operationId: ListRoles
+      parameters:
+        - name: X-Auth-token
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListRolesResponse'
+      security:
+        - auth: [ ]
+    post:
+      tags:
+        - application
+      summary: Create a Role
+      operationId: CreateRole
+      parameters:
+        - name: X-Auth-token
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateARoleRequest'
+        required: true
+      responses:
+        '201':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateARoleResponse'
+      security:
+        - auth: [ ]
+
+  '/applications/:application_id/roles/:role_id':
+    get:
+      tags:
+        - application
+      summary: Read Role details
+      operationId: ReadRoleDetails
+      parameters:
+        - name: X-Auth-token
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReadRoleDetailsResponse'
+      security:
+        - auth: [ ]
+    delete:
+      tags:
+        - application
+      summary: Delete a Role
+      operationId: DeleteRole
+      parameters:
+        - name: X-Auth-token
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: ''
+          content: { }
+      security:
+        - auth: [ ]
+    patch:
+      tags:
+        - application
+      summary: Update a Role
+      operationId: UpdateRole
+      parameters:
+        - name: X-Auth-token
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateARoleRequest'
+        required: true
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateARoleResponse'
+      security:
+        - auth: [ ]
+  '/applications/:application_id/permissions':
+    get:
+      tags:
+        - application
+      summary: List Permissions
+      operationId: ListPermissions
+      parameters:
+        - name: X-Auth-token
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListPermissionsResponse'
+      security:
+        - auth: [ ]
+    post:
+      tags:
+        - application
+      summary: Create a Permission
+      operationId: CreatePermission
+      parameters:
+        - name: X-Auth-token
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAPermissionRequest'
+        required: true
+      responses:
+        '201':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateAPermissionResponse'
+      security:
+        - auth: [ ]
+  '/applications/:application_id/permissions/:permission_id':
+    get:
+      tags:
+        - application
+      summary: Read Permission details
+      operationId: ReadPermission
+      parameters:
+        - name: X-Auth-token
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReadPermissionDetailsResponse'
+      security:
+        - auth: [ ]
+    delete:
+      tags:
+        - application
+      summary: Delete a Permission
+      operationId: DeletePermission
+      parameters:
+        - name: X-Auth-token
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: ''
+          content: { }
+      security:
+        - auth: [ ]
+    patch:
+      tags:
+        - application
+      summary: Update a Permission
+      operationId: UpdatePermission
+      parameters:
+        - name: X-Auth-token
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateAPermissionRequest'
+        required: true
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateAPermissionResponse'
+      security:
+        - auth: [ ]
+  '/applications/:application_id/pep_proxies':
+    get:
+      tags:
+        - application
+      summary: Info Pep Proxy
+      operationId: InfoPepProxy
+      parameters:
+        - name: X-Auth-token
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InfoPepProxyResponse'
+      security:
+        - auth: [ ]
+    post:
+      tags:
+        - application
+      summary: Create a Pep Proxy
+      operationId: CreatePepProxy
+      parameters:
+        - name: X-Auth-token
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        '201':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateAPepProxyResponse'
+      security:
+        - auth: [ ]
+    delete:
+      tags:
+        - application
+      summary: Delete Pep Proxy
+      operationId: DeletePepProxy
+      parameters:
+        - name: X-Auth-token
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: ''
+          content: { }
+      security:
+        - auth: [ ]
+    patch:
+      tags:
+        - application
+      summary: Reset Password of Pep Proxy
+      operationId: ResetPassword
+      parameters:
+        - name: X-Auth-token
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResetPasswordOfPepProxyResponse'
+      security:
+        - auth: [ ]
+  '/applications/:application_id/iot_agents':
+    get:
+      tags:
+        - application
+      summary: List of Iot Agents
+      operationId: ListIotAgents
+      parameters:
+        - name: X-Auth-token
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListOfIotAgentsResponse'
+      security:
+        - auth: [ ]
+    post:
+      tags:
+        - application
+      summary: Create an Iot Agent
+      operationId: CreateIotAgent
+      parameters:
+        - name: X-Auth-token
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        '201':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateAnIotAgentResponse'
+      security:
+        - auth: [ ]
+  '/applications/:application_id/permissions/:iot_agent_id':
+    get:
+      tags:
+        - application
+      summary: Read Iot agent details
+      operationId: ReadIotAgent
+      parameters:
+        - name: X-Auth-token
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReadIotAgentDetailsResponse'
+      security:
+        - auth: [ ]
+    delete:
+      tags:
+        - application
+      summary: Delete an Iot Agent
+      operationId: DeleteIotAgent
+      parameters:
+        - name: X-Auth-token
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: ''
+          content: { }
+      security:
+        - auth: [ ]
+    patch:
+      tags:
+        - application
+      summary: Reset Password of Iot Agent
+      operationId: ResetPasswordOfIotAgent
+      parameters:
+        - name: X-Auth-token
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResetPasswordOfIotAgentResponse'
+      security:
+        - auth: [ ]
+  '/applications/:application_id/roles/:role_id/permissions':
+    get:
+      tags:
+        - application
+      summary: List permissions associated to a role
+      operationId: ListRolePermissions
+      parameters:
+        - name: X-Auth-token
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListPermissionsAssociatedToARoleResponse'
+      security:
+        - auth: [ ]
+  '/applications/:application_id/roles/:role_id/permissions/:permission_id':
+    post:
+      tags:
+        - application
+      summary: Assign a permission to a role
+      operationId: AssignPermission
+      parameters:
+        - name: X-Auth-token
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        '201':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssignAPermissionToARoleResponse'
+      security:
+        - auth: [ ]
+    delete:
+      tags:
+        - application
+      summary: Remove a permission from a role
+      operationId: RemovePermission
+      parameters:
+        - name: X-Auth-token
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: ''
+          content: { }
+      security:
+        - auth: [ ]
+  '/applications/:application_id/users':
+    get:
+      tags:
+        - application
+      summary: List users in an application
+      operationId: ListUsersInApplication
+      parameters:
+        - name: X-Auth-token
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListUsersInAnApplicationResponse'
+      security:
+        - auth: [ ]
+  '/applications/:application_id/users/:user_id/roles':
+    get:
+      tags:
+        - application
+      summary: List users role assignments
+      operationId: ListUsersRoleAssignments
+      parameters:
+        - name: X-Auth-token
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListUsersRoleAssignmentsResponse'
+      security:
+        - auth: [ ]
+  '/applications/:application_id/users/:user_id/roles/:role_id':
+    put:
+      tags:
+        - application
+      summary: Assign a role to a user
+      operationId: AssignRole
+      parameters:
+        - name: X-Auth-token
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        '201':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssignARoleToAUserResponse'
+      security:
+        - auth: [ ]
+    delete:
+      tags:
+        - application
+      summary: Remove a role assignment from a user
+      operationId: RemoveRoleAssignment
+      parameters:
+        - name: X-Auth-token
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: ''
+          content: { }
+      security:
+        - auth: [ ]
+  '/applications/:application_id/organizations':
+    get:
+      tags:
+        - application
+      summary: List organizations in an application
+      operationId: ListApplicationOrganizations
+      parameters:
+        - name: X-Auth-token
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListOrganizationsInAnApplicationResponse'
+      security:
+        - auth: [ ]
+  '/applications/:application_id/organizations/:organization_id/roles':
+    get:
+      tags:
+        - application
+      summary: List organizations role assignments
+      operationId: ListRoleAssignments
+      parameters:
+        - name: X-Auth-token
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListOrganizationsRoleAssignmentsResponse'
+      security:
+        - auth: [ ]
+  '/applications/:application_id/organizations/:organization_id/roles/:role_id/organization_roles/:organization_role_id':
+    put:
+      tags:
+        - application
+      summary: Assign a role to a organization
+      operationId: AssignOrganizationRole
+      parameters:
+        - name: X-Auth-token
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        '201':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssignARoleToAOrganizationResponse'
+      security:
+        - auth: [ ]
+    delete:
+      tags:
+        - application
+      summary: Remove a role assignment from an organization
+      operationId: RemoveRoleAssignmentFromOrgization
+      parameters:
+        - name: X-Auth-token
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: ''
+          content: { }
+      security:
+        - auth: [ ]
+  '/organizations/:organization_id/users':
+    get:
+      tags:
+        - organization
+      summary: List members
+      operationId: ListMembers
+      parameters:
+        - name: X-Auth-token
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListMembersResponse'
+      security:
+        - auth: [ ]
+  '/organizations/:organization_id/users/:user_id/organization_roles':
+    get:
+      tags:
+        - organization
+      summary: Info of user organization relationship
+      operationId: InfoOfUserOrganizationRelationship
+      parameters:
+        - name: X-Auth-token
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: >-
+                  #/components/schemas/InfoOfUserOrganizationRelationshipResponse
+      security:
+        - auth: [ ]
+  '/organizations/:organization_id/users/:user_id/organization_roles/:organization_role_id':
+    put:
+      tags:
+        - organization
+      summary: Create relationship
+      operationId: CreateRelationship
+      parameters:
+        - name: X-Auth-token
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        '201':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateRelationshipResponse'
+      security:
+        - auth: [ ]
+    delete:
+      tags:
+        - organization
+      summary: Delete relationship
+      operationId: DeleteRelationship
+      parameters:
+        - name: X-Auth-token
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: ''
+          content: { }
+      security:
+        - auth: [ ]
+  '/applications/:application_id/trusted_applications':
+    get:
+      tags:
+        - application
+      summary: List trusted applications associated to an application
+      operationId: ListTrustedApplications
+      parameters:
+        - name: X-Auth-token
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: >-
+                  #/components/schemas/ListTrustedApplicationsAssociatedToAnApplicationResponse
+      security:
+        - auth: [ ]
+  '/applications/:application_id/trusted_applications/:trustedApplicationId':
+    put:
+      tags:
+        - application
+      summary: Add trusted application
+      operationId: AddTrustedApplication
+      parameters:
+        - name: X-Auth-token
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        '201':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AddTrustedApplicationResponse'
+      security:
+        - auth: [ ]
+    delete:
+      tags:
+        - application
+      summary: Remove trusted application from an application
+      operationId: RemoveTrustedApplication
+      parameters:
+        - name: X-Auth-token
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: ''
+          content: { }
+      security:
+        - auth: [ ]
+  /service_providers/configs:
+    get:
+      tags:
+        - application
+      summary: Read Service Provider Configuration
+      description: >-
+        "Information" provides the number of total users, total organizations,
+        and the number of applications.
+      operationId: ReadConfiguration
+      parameters:
+        - name: X-Auth-token
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReadServiceProviderConfigurationResponse'
+      security:
+        - auth: [ ]
+components:
+  schemas:
+    Application:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        image:
+          type: string
+        url:
+          type: string
+        redirect_uri:
+          type: string
+        grant_type:
+          type: string
+        response_type:
+          type: string
+        client_type:
+          type: string
+    Organization:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        image:
+          type: string
+        website:
+          type: string
+    Role:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        oauth_client_id:
+          type: string
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+        username:
+          type: string
+        email:
+          type: string
+        date_password:
+          type: string
+        enabled:
+          type: boolean
+        admin:
+          type: boolean
+    IotAgent:
+      type: object
+      properties:
+        id:
+          type: string
+        password:
+          type: string
+        oauth_client_id:
+          type: string
+    Permission:
+      type: object
+      properties:
+        id:
+          type: string
+        is_internal:
+          type: boolean
+        name:
+          type: string
+        description:
+          type: string
+        xml:
+          type: string
+    PepProxy:
+      type: object
+      properties:
+        id:
+          type: string
+        oauth_client_id:
+          type: string
+
+    CreateTokenWithTokenMethodRequest:
+      title: Create token with Token method request
+      required:
+        - token
+      type: object
+      properties:
+        token:
+          type: string
+    CreateTokenWithTokenMethodResponse:
+      title: Create token with Token method response
+      required:
+        - token
+      type: object
+      properties:
+        token:
+          type: object
+          properties:
+            methods:
+              type: array
+              items:
+                type: string
+            exipres_at:
+              type: string
+    GetTokenInfoResponse:
+      title: Get token info response
+      required:
+        - User
+        - access_token
+        - expires
+        - valid
+      type: object
+      properties:
+        access_token:
+          type: string
+        expires:
+          type: string
+        valid:
+          type: boolean
+        User:
+          $ref: '#/components/schemas/User'
+    ListApplicationsResponse:
+      title: List Applications response
+      required:
+        - applications
+      type: object
+      properties:
+        applications:
+          type: array
+          items:
+            $ref: '#/components/schemas/Application'
+    CreateAnApplicationRequest:
+      title: Create an Application request
+      required:
+        - application
+      type: object
+      properties:
+        application:
+          $ref: '#/components/schemas/Application'
+    CreateAnApplicationResponse:
+      title: Create an Application response
+      required:
+        - application
+      type: object
+      properties:
+        application:
+          $ref: '#/components/schemas/Application'
+    ReadApplicationDetailsResponse:
+      title: Read Application details response
+      required:
+        - application
+      type: object
+      properties:
+        application:
+          $ref: '#/components/schemas/Application'
+    UpdateAnApplicationRequest:
+      title: Update an Application request
+      required:
+        - application
+      type: object
+      properties:
+        application:
+          $ref: '#/components/schemas/Application'
+    UpdateAnApplicationResponse:
+      title: Update an Application response
+      required:
+        - values_updated
+      type: object
+      properties:
+        values_updated:
+          $ref: '#/components/schemas/Application'
+    ListUsersResponse:
+      title: List Users response
+      required:
+        - users
+      type: object
+      properties:
+        users:
+          type: array
+          items:
+            $ref: '#/components/schemas/User'
+    CreateAUserRequest:
+      title: Create a User request
+      required:
+        - user
+      type: object
+      properties:
+        user:
+          $ref: '#/components/schemas/User'
+
+    CreateAUserResponse:
+      title: Create a User response
+      required:
+        - user
+      type: object
+      properties:
+        user:
+          $ref: '#/components/schemas/User'
+    ReadInfoAboutAUserResponse:
+      title: Read info about a User response
+      required:
+        - user
+      type: object
+      properties:
+        user:
+          $ref: '#/components/schemas/User'
+    UpdateAUserRequest:
+      title: Update a User request
+      required:
+        - user
+      type: object
+      properties:
+        user:
+          $ref: '#/components/schemas/User'
+    UpdateAUserResponse:
+      title: Update a User response
+      required:
+        - values_updated
+      type: object
+      properties:
+        values_updated:
+          $ref: '#/components/schemas/User'
+
+    ListOrganizationsResponse:
+      title: List Organizations response
+      required:
+        - organizations
+      type: object
+      properties:
+        organizations:
+          type: array
+          items:
+            $ref: '#/components/schemas/Organization'
+
+    CreateAnOrganizationRequest:
+      title: Create an Organization request
+      required:
+        - organization
+      type: object
+      properties:
+        organization:
+          $ref: '#/components/schemas/Organization'
+    CreateAnOrganizationResponse:
+      title: Create an Organization response
+      required:
+        - organization
+      type: object
+      properties:
+        organization:
+          $ref: '#/components/schemas/Organization'
+    ReadInfoAboutAnOrganizationResponse:
+      title: Read info about an Organization response
+      required:
+        - organization
+      type: object
+      properties:
+        organization:
+          $ref: '#/components/schemas/Organization'
+
+    UpdateAnOrganizationRequest:
+      title: Update an Organization request
+      required:
+        - organization
+      type: object
+      properties:
+        organization:
+          $ref: '#/components/schemas/Organization'
+    UpdateAnOrganizationResponse:
+      title: Update an Organization response
+      required:
+        - values_updated
+      type: object
+      properties:
+        values_updated:
+          $ref: '#/components/schemas/Organization'
+    ListRolesResponse:
+      title: List Roles response
+      required:
+        - roles
+      type: object
+      properties:
+        roles:
+          type: array
+          description: ''
+          items:
+            $ref: '#/components/schemas/Role'
+    CreateARoleRequest:
+      title: Create a Role request
+      required:
+        - role
+      type: object
+      properties:
+        role:
+          $ref: '#/components/schemas/Role'
+    CreateARoleResponse:
+      title: Create a Role response
+      required:
+        - role
+      type: object
+      properties:
+        role:
+          $ref: '#/components/schemas/Role'
+    ReadRoleDetailsResponse:
+      title: Read Role details response
+      required:
+        - role
+      type: object
+      properties:
+        role:
+          $ref: '#/components/schemas/Role'
+    UpdateARoleRequest:
+      title: Update a Role request
+      required:
+        - role
+      type: object
+      properties:
+        role:
+          $ref: '#/components/schemas/Role'
+    UpdateARoleResponse:
+      title: Update a Role response
+      required:
+        - values_updated
+      type: object
+      properties:
+        values_updated:
+          $ref: '#/components/schemas/Role'
+    ListPermissionsResponse:
+      title: List Permissions response
+      required:
+        - permissions
+      type: object
+      properties:
+        permissions:
+          type: array
+          description: ''
+          items:
+            $ref: '#/components/schemas/Permission'
+    CreateAPermissionRequest:
+      title: Create a Permission request
+      required:
+        - permission
+      type: object
+      properties:
+        permission:
+          $ref: '#/components/schemas/Permission'
+    CreateAPermissionResponse:
+      title: Create a Permission response
+      required:
+        - permission
+      type: object
+      properties:
+        permission:
+          $ref: '#/components/schemas/Permission'
+    ReadPermissionDetailsResponse:
+      title: Read Permission details response
+      required:
+        - permission
+      type: object
+      properties:
+        permission:
+          $ref: '#/components/schemas/Permission'
+    UpdateAPermissionRequest:
+      title: Update a Permission request
+      required:
+        - permission
+      type: object
+      properties:
+        permission:
+          $ref: '#/components/schemas/Permission'
+    UpdateAPermissionResponse:
+      title: Update a Permission response
+      required:
+        - values_updated
+      type: object
+      properties:
+        values_updated:
+          $ref: '#/components/schemas/Permission'
+
+    InfoPepProxyResponse:
+      title: Info Pep Proxy response
+      required:
+        - pep_proxy
+      type: object
+      properties:
+        pep_proxy:
+          $ref: '#/components/schemas/PepProxy'
+    CreateAPepProxyResponse:
+      title: Create a Pep Proxy response
+      required:
+        - pep_proxy
+      type: object
+      properties:
+        pep_proxy:
+          $ref: '#/components/schemas/PepProxy'
+    ResetPasswordOfPepProxyResponse:
+      title: Reset Password of Pep Proxy response
+      required:
+        - new_password
+      type: object
+      properties:
+        new_password:
+          type: string
+
+    ListOfIotAgentsResponse:
+      title: List of Iot Agents response
+      required:
+        - iots
+      type: object
+      properties:
+        iots:
+          type: array
+          items:
+            $ref: '#/components/schemas/IotAgent'
+    CreateAnIotAgentResponse:
+      title: Create an Iot Agent response
+      required:
+        - iot
+      type: object
+      properties:
+        iot:
+          $ref: '#/components/schemas/IotAgent'
+    ReadIotAgentDetailsResponse:
+      title: Read Iot agent details response
+      required:
+        - iot
+      type: object
+      properties:
+        iot:
+          $ref: '#/components/schemas/IotAgent'
+    ResetPasswordOfIotAgentResponse:
+      title: Reset Password of Iot Agent response
+      required:
+        - new_password
+      type: object
+      properties:
+        new_password:
+          type: string
+          description: ''
+
+    ListPermissionsAssociatedToARoleResponse:
+      title: List permissions associated to a role response
+      required:
+        - role_permission_assignments
+      type: object
+      properties:
+        role_permission_assignments:
+          type: array
+          description: ''
+          items:
+            $ref: '#/components/schemas/Permission'
+    AssignAPermissionToARoleResponse:
+      title: Assign a permission to a role response
+      required:
+        - role_permission_assignments
+      type: object
+      properties:
+        role_permission_assignments:
+          type: object
+          properties:
+            role_id:
+              type: string
+            permission_id:
+              type: string
+          description: ''
+    ListUsersInAnApplicationResponse:
+      title: List users in an application response
+      required:
+        - role_user_assignments
+      type: object
+      properties:
+        role_user_assignments:
+          type: array
+          description: ''
+          items:
+            type: object
+            properties:
+              user_id:
+                type: string
+              role_id:
+                type: string
+    ListUsersRoleAssignmentsResponse:
+      title: List users role assignments response
+      required:
+        - role_user_assignments
+      type: object
+      properties:
+        role_user_assignments:
+          type: array
+          description: ''
+          items:
+            type: object
+            properties:
+              user_id:
+                type: string
+              role_id:
+                type: string
+    AssignARoleToAUserResponse:
+      title: Assign a role to a user response
+      required:
+        - role_user_assignments
+      type: object
+      properties:
+        role_user_assignments:
+          type: object
+          properties:
+            role_id:
+              type: string
+            user_id:
+              type: string
+            oauth_client_id:
+              type: string
+          description: ''
+    ListOrganizationsInAnApplicationResponse:
+      title: List organizations in an application response
+      required:
+        - role_organization_assignments
+      type: object
+      properties:
+        role_organization_assignments:
+          type: array
+          description: ''
+          items:
+            type: object
+            properties:
+              organization_id:
+                type: string
+              role_organization:
+                type: string
+              role_id:
+                type: string
+    ListOrganizationsRoleAssignmentsResponse:
+      title: List organizations role assignments response
+      required:
+        - role_organization_assignments
+      type: object
+      properties:
+        role_organization_assignments:
+          type: array
+          description: ''
+          items:
+            type: object
+            properties:
+              organization_id:
+                type: string
+              role_id:
+                type: string
+    AssignARoleToAOrganizationResponse:
+      title: Assign a role to a organization response
+      required:
+        - role_organization_assignments
+      type: object
+      properties:
+        role_organization_assignments:
+          type: object
+          properties:
+            role_id:
+              type: string
+            organization_id:
+              type: string
+            oauth_client_id:
+              type: string
+          description: ''
+    ListMembersResponse:
+      title: List members response
+      required:
+        - organization_users
+      type: object
+      properties:
+        organization_users:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrganizationUser'
+    OrganizationUser:
+      type: object
+      properties:
+        user_id:
+          type: string
+        organization_id:
+          type: string
+        role:
+          type: string
+    InfoOfUserOrganizationRelationshipResponse:
+      title: Info of user organization relationship response
+      required:
+        - organization_user
+      type: object
+      properties:
+        organization_user:
+          type: object
+          description: ''
+          properties:
+            user_id:
+              type: string
+            organization_id:
+              type: string
+            role:
+              type: string
+    CreateRelationshipResponse:
+      title: Create relationship response
+      required:
+        - user_organization_assignments
+      type: object
+      properties:
+        user_organization_assignments:
+          type: object
+          description: ''
+          properties:
+            role:
+              type: string
+            user_id:
+              type: string
+            organization_id:
+              type: string
+    ListTrustedApplicationsAssociatedToAnApplicationResponse:
+      title: List trusted applications associated to an application response
+      required:
+        - trusted_applications
+      type: object
+      properties:
+        trusted_applications:
+          type: array
+          description: ''
+          items:
+            type: string
+    AddTrustedApplicationResponse:
+      title: Add trusted application response
+      required:
+        - oauth_client_id
+        - trusted_oauth_client_id
+      type: object
+      properties:
+        oauth_client_id:
+          type: string
+          description: ''
+        trusted_oauth_client_id:
+          type: string
+          description: ''
+    ReadServiceProviderConfigurationResponse:
+      title: Read Service Provider Configuration response
+      required:
+        - information
+      type: object
+      properties:
+        information:
+          type: object
+          description: ''
+          properties:
+            totalUsers:
+              type: integer
+            totalOrganizations:
+              type: integer
+            totalApplications:
+              type: integer
+    Login:
+      type: object
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+
+  securitySchemes:
+    auth:
+      type: oauth2
+      flows:
+        implicit:
+          authorizationUrl: 'https://api.vixal.xyz/api'
+          scopes: { }

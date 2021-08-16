@@ -364,7 +364,7 @@ var GlobalFlags = []cli.Flag{
 	},
 	&cli.BoolFlag{
 		Name:    "disable-default-content-type",
-		Usage:   "excludes the default Content-Type header from the response",
+		Usage:   "excludes the default Content-ClientType header from the response",
 		EnvVars: []string{"FIBER_DISABLEDEFAULTCONTENTTYPE"},
 	},
 	&cli.BoolFlag{

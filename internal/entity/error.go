@@ -18,6 +18,10 @@ type Error struct {
 
 type Errors []Error
 
+func (Error) TableName() string {
+	return "error"
+}
+
 // SaveErrorMessages subscribes to error logs and stored them in the errors table.
 func SaveErrorMessages() {
 	s := event.Subscribe("log.*")

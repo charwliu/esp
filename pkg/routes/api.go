@@ -2,33 +2,45 @@ package routes
 
 import (
 	"github.com/gofiber/fiber/v2"
-	"gorm.io/gorm"
 
 	Controller "go.vixal.xyz/esp/app/controllers/api"
+	"go.vixal.xyz/esp/internal/api"
 )
 
-func RegisterAPI(api fiber.Router, db *gorm.DB) {
-	registerRoles(api, db)
-	registerUsers(api, db)
-	api.Group("status", Controller.GetStatus())
+func RegisterAPI(router fiber.Router) {
+	registerRoles(router)
+	registerUsers(router)
+	registerTokens(router)
+	api.GetStatus(router)
+	api.GetProfile(router)
+	api.GetStats(router)
+
 }
 
-func registerRoles(api fiber.Router, db *gorm.DB) {
-	roles := api.Group("/roles")
+func registerRoles(router fiber.Router) {
+	roles := router.Group("/roles")
 
-	roles.Get("/", Controller.GetAllRoles(db))
-	roles.Get("/:id", Controller.GetRole(db))
-	roles.Post("/", Controller.AddRole(db))
-	roles.Put("/:id", Controller.EditRole(db))
-	roles.Delete("/:id", Controller.DeleteRole(db))
+	Controller.GetAllRoles(router)
+
+	Controller.GetRole(roles)
+	Controller.AddRole(roles)
+	Controller.EditRole(roles)
+	Controller.DeleteRole(roles)
 }
 
-func registerUsers(api fiber.Router, db *gorm.DB) {
-	users := api.Group("/users")
+func registerUsers(router fiber.Router) {
+	users := router.Group("/users")
+	api.GetAllUsers(users)
+	api.GetUserInfo(users)
+	api.CreateUser(users)
+	api.DeleteUser(users)
+	api.EditUser(users)
+	api.ChangePassword(users)
+}
 
-	users.Get("/", Controller.GetAllUsers(db))
-	users.Get("/:id", Controller.GetUser(db))
-	users.Post("/", Controller.AddUser(db))
-	users.Put("/:id", Controller.EditUser(db))
-	users.Delete("/:id", Controller.DeleteUser(db))
+func registerTokens(router fiber.Router) {
+	tokens := router.Group("/tokens")
+	api.CreateToken(tokens)
+	api.InfoToken(tokens)
+	api.DeleteToken(tokens)
 }

@@ -9,4 +9,4 @@ export const trimQuotes = (str: string) => {
     return str.replace(/\'|\"/g, '');
 };
 
-export const GENERATOR_ENTITY_ALLIAS = 'Entities/';
+export const GENERATOR_ENTITY_ALLIAS = '@entities/';

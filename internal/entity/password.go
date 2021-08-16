@@ -14,6 +14,10 @@ type Password struct {
 	UpdatedAt time.Time `deepcopier:"skip" json:"UpdatedAt"`
 }
 
+func (Password) TableName() string {
+	return "password"
+}
+
 // NewPassword creates a new password instance.
 func NewPassword(uid, password string) Password {
 	if uid == "" {

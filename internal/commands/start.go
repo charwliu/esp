@@ -13,6 +13,7 @@ import (
 	"github.com/urfave/cli/v2"
 
 	"go.vixal.xyz/esp/internal/config"
+	"go.vixal.xyz/esp/internal/service"
 	"go.vixal.xyz/esp/pkg/fs"
 	"go.vixal.xyz/esp/pkg/txt"
 	"go.vixal.xyz/esp/server"
@@ -44,7 +45,7 @@ var startFlags = []cli.Flag{
 // startAction start the web server and initializes the daemon
 func startAction(ctx *cli.Context) error {
 	conf := config.NewConfig(ctx)
-	//service.SetConfig(conf)
+	service.SetConfig(conf)
 
 	if ctx.IsSet("config") {
 		fmt.Printf("NAME                  VALUE\n")
