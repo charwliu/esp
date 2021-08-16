@@ -40,8 +40,8 @@ type App struct {
 
 func Create(config *configuration.Config) (*App, error) {
 	app := &App{
-		App:     fiber.New(*config.FiberConfig()),
-		Hasher:  hashing.New(config.HasherConfig()),
+		App:    fiber.New(*config.FiberConfig()),
+		Hasher: hashing.New(config.HasherConfig()),
 	}
 
 	app.registerMiddlewares(config)

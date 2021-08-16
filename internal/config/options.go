@@ -150,6 +150,7 @@ type FiberConfig struct {
 	ViewsLayout               string        `yaml:"ViewsLayout"`
 	EnableTrustedProxyCheck   bool          `yaml:"EnableTrustedProxyCheck" json:"enable_trusted_proxy_check"`
 	TrustedProxies            []string      `yaml:"TrustedProxies" json:"trusted_proxies"`
+	Network                   string        `yaml:"Network"`
 }
 
 type FiberViewConfig struct {
@@ -164,7 +165,7 @@ type FiberViewConfig struct {
 }
 
 type HasherConfig struct {
-	Driver      string `yaml:"Driver", json:"driver"`
+	Driver      string `yaml:"Driver" json:"driver"`
 	Rounds      int    `yaml:"Rounds"`
 	Memory      uint32 `yaml:"Memory"`
 	SaltLength  uint32 `yaml:"SaltLength"`

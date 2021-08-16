@@ -479,6 +479,7 @@ func (c *Config) FiberConfig() *fiber.Config {
 		ReduceMemoryUsage:         cfg.ReduceMemoryUsage,
 		EnableTrustedProxyCheck:   cfg.EnableTrustedProxyCheck,
 		TrustedProxies:            cfg.TrustedProxies,
+		Network:                   cfg.Network,
 	}
 	return c.fiber
 }
@@ -583,7 +584,6 @@ func (c *Config) SessionConfig() session.Config {
 		CookiePath:     cfg.CookiePath,
 		Expiration:     cfg.Expiration,
 		Storage:        storage,
-
 	}
 }
 
@@ -974,7 +974,7 @@ func (c *Config) AccessLogger() *AccessLoggerConfig {
 func (c *Config) Session() *SessionConfig {
 	if c.options.SessionConfig == nil {
 		c.options.SessionConfig = &SessionConfig{
-			Provider:       "postgres",
+			Provider:       "sqlite3",
 			KeyLookup:      "cookie:session_id",
 			Database:       "esp_db",
 			Table:          "sessions",
