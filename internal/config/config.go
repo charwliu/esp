@@ -532,7 +532,6 @@ func (c *Config) SessionConfig() session.Config {
 		storage = memcache.New(memcache.Config{
 			Servers: cfg.Host + ":" + strconv.Itoa(cfg.Port),
 		})
-
 		break
 	case "mysql":
 		storage = mysql.New(mysql.Config{
@@ -558,22 +557,20 @@ func (c *Config) SessionConfig() session.Config {
 		break
 	case "redis":
 		db, _ := strconv.Atoi(cfg.Database)
-		sessionProvider := redis.New(redis.Config{
+		storage = redis.New(redis.Config{
 			Host:     cfg.Host,
 			Port:     cfg.Port,
 			Username: cfg.Username,
 			Password: cfg.Password,
 			Database: db,
 		})
-		storage = sessionProvider
 		break
 	case "sqlite3":
-		sessionProvider := sqlite3.New(sqlite3.Config{
+		storage = sqlite3.New(sqlite3.Config{
 			Database:   cfg.Database,
 			Table:      cfg.Table,
 			GCInterval: cfg.GCInterval,
 		})
-		storage = sessionProvider
 		break
 	}
 
@@ -975,7 +972,7 @@ func (c *Config) AccessLogger() *AccessLoggerConfig {
 func (c *Config) Session() *SessionConfig {
 	if c.options.SessionConfig == nil {
 		c.options.SessionConfig = &SessionConfig{
-			Provider:       "sqlite3",
+			Provider:       "memory",
 			KeyLookup:      "cookie:session_id",
 			Database:       "esp_db",
 			Table:          "sessions",

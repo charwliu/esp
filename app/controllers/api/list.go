@@ -2,12 +2,11 @@ package api
 
 import (
 	"github.com/gofiber/fiber/v2"
+	"go.vixal.xyz/esp/pkg/uniuri"
 	"math"
 	"math/rand"
 	"strconv"
 	"time"
-
-	"github.com/dchest/uniuri"
 )
 
 type Status string
