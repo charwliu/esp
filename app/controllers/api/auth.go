@@ -85,11 +85,14 @@ func UserLogin(router fiber.Router) {
 		if err := sess.Save(); err != nil {
 			panic(err)
 		}
-
+		role := "user"
+		if len(data.User.Roles) > 1 {
+			role = data.User.Roles[0].RoleName
+		}
 		return ctx.Status(fiber.StatusOK).JSON(Response{
 			Id:               id,
 			Status:           "ok",
-			CurrentAuthority: string(data.User.Roles[0].RoleName),
+			CurrentAuthority: role,
 		})
 	})
 }
