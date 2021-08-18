@@ -26,7 +26,7 @@ type User struct {
 	Gender        int16          `gorm:"size:1" json:"gender,omitempty"`                  // 用户性别（0男 1女 2未知）
 	Status        int16          `gorm:"size:1;default:0" json:"status,omitempty"`        // 帐号状态（0正常 1停用）
 	LoginIP       string         `gorm:"size:50;default:''" json:"loginIp,omitempty"`     // 最后登陆IP
-	LoginDate     time.Time      `json:"loginDate,omitempty"`                             // 最后登陆时间
+	LoginAt       time.Time      `json:"loginAt,omitempty"`                               // 最后登陆时间
 	Remark        string         `gorm:"size:500" json:"remark,omitempty"`                // 备注
 	OpenID        string         `gorm:"size:100" json:"openId,omitempty"`                // 微信OpenId
 	NickName      string         `gorm:"size:100" json:"nickName,omitempty"`              // 昵称
@@ -52,11 +52,12 @@ func (User) TableName() string {
 
 // Admin Default admin user.
 var Admin = User{
-	ID:        1,
-	AddressID: 1,
-	UserName:  "admin",
-	Email:     "Admin@example.com",
-	DeptID:    0,
+	ID:          1,
+	AddressID:   1,
+	UserName:    "admin",
+	Email:       "Admin@example.com",
+	PhoneNumber: "1329394934",
+	DeptID:      0,
 }
 
 // CreateDefaultUsers initializes the database with default user accounts.

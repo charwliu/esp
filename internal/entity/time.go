@@ -6,9 +6,9 @@ import (
 
 const Day = time.Hour * 24
 
-// Timestamp returns the current time in UTC rounded to second.
+// Timestamp returns the current time rounded to second.
 func Timestamp() time.Time {
-	return time.Now().UTC().Round(time.Second)
+	return time.Now().Round(time.Second)
 }
 
 // Seconds converts an int to a duration in seconds.
