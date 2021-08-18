@@ -40,6 +40,7 @@ func RegisterWeb(web fiber.Router, hasher hashing.Driver) {
 	apiv1 := api.Group("/v1")
 	ShowLoginForm(apiv1)
 	UserLogin(apiv1)
+	UserLogout(apiv1)
 	DeleteSession(apiv1)
 	GetCurrentUser(apiv1)
 }

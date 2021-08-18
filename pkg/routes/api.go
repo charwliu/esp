@@ -11,10 +11,18 @@ func RegisterAPI(router fiber.Router) {
 	registerRoles(router)
 	registerUsers(router)
 	registerTokens(router)
+	registerGeographic(router)
 	api.GetStatus(router)
 	api.GetProfile(router)
 	api.GetStats(router)
+	Controller.GetNotices(router)
+	Controller.GetFakeList(router)
+}
 
+func registerGeographic(router fiber.Router) {
+	geo := router.Group("/geographic")
+	Controller.GetProvince(geo)
+	Controller.GetCity(geo)
 }
 
 func registerRoles(router fiber.Router) {

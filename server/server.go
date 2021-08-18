@@ -106,7 +106,7 @@ func (app *App) registerMiddlewares(config *configuration.Config) {
 	if config.FiberCacheEnabled() {
 		app.Use(cache.New(cache.Config{
 			Expiration:   config.FiberCacheExpiration(),
-			CacheControl: config.FiberCacheCacheControl(),
+			CacheControl: config.FiberCacheControl(),
 		}))
 	}
 
