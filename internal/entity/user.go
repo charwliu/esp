@@ -1,6 +1,7 @@
 package entity
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
@@ -62,10 +63,9 @@ var Admin = User{
 
 // CreateDefaultUsers initializes the database with default user accounts.
 func CreateDefaultUsers() {
-	if user := FirstOrCreateUser(&Admin); user != nil {
+	if user, err := FirstOrCreateUser(&Admin); err == nil {
 		Admin = *user
 	}
-
 }
 
 // Create inserts a new row to the database.
@@ -93,25 +93,25 @@ func (m *User) BeforeCreate(*gorm.DB) error {
 }
 
 // FirstOrCreateUser returns an existing row, inserts a new row or nil in case of errors.
-func FirstOrCreateUser(m *User) *User {
+func FirstOrCreateUser(m *User) (*User, error) {
 	result := User{}
 	var err error
 	if err = DB().Preload("Address").
 		Where("id = ? OR user_uid = ? OR user_name = ?", m.ID, m.UserUID, m.UserName).
 		First(&result).Error; err == nil {
-		return &result
+		return &result, nil
 	} else if err = m.Create(); err != nil {
-		log.Debugf("user: %s, %s", m.UserUID, err)
-		return nil
+		log.Errorf("user: %s, %s", m.UserUID, err)
+		return nil, err
 	}
 
-	return m
+	return m, nil
 }
 
 // FindUserByName returns an existing user or nil if not found.
-func FindUserByName(userName string) *User {
+func FindUserByName(userName string) (*User, error) {
 	if userName == "" {
-		return nil
+		return nil, errors.New("name is empty")
 	}
 
 	result := User{}
@@ -121,17 +121,17 @@ func FindUserByName(userName string) *User {
 		Preload("Roles").
 		Joins("LEFT JOIN user_role ur ON ur.user_id = id").
 		Where("user_name = ?", userName).First(&result).Error; err == nil {
-		return &result
+		return &result, nil
 	} else {
-		log.Debugf("user %s not found", txt.Quote(userName))
-		return nil
+		log.Errorf("user %s not found", txt.Quote(userName))
+		return nil, err
 	}
 }
 
 // FindUserByUID returns an existing user or nil if not found.
-func FindUserByUID(uid string) *User {
+func FindUserByUID(uid string) (*User, error) {
 	if uid == "" {
-		return nil
+		return nil, errors.New("UID is empty")
 	}
 
 	result := User{}
@@ -141,10 +141,10 @@ func FindUserByUID(uid string) *User {
 		Preload("Roles").
 		Joins("LEFT JOIN user_role ur ON ur.user_id = id").
 		Where("user_uid = ?", uid).First(&result).Error; err == nil {
-		return &result
+		return &result, nil
 	} else {
-		log.Debugf("user %s not found", txt.Quote(uid))
-		return nil
+		log.Errorf("user %s not found", txt.Quote(uid))
+		return nil, err
 	}
 }
 

@@ -6,12 +6,11 @@ import (
 
 	"go.vixal.xyz/esp/internal/acl"
 	"go.vixal.xyz/esp/internal/service"
-
 )
 
 // Session returns the current session data.
 func Session(c *fiber.Ctx) *session.Session {
-	sess, err := service.Session().Get(c)
+	sess, err := service.Store().Get(c)
 	if err != nil {
 		return nil
 	}
@@ -19,13 +18,11 @@ func Session(c *fiber.Ctx) *session.Session {
 	return sess
 }
 
-
 // Auth returns the session if user is authorized for the current action.
 func Auth(sess *session.Session, resource acl.Resource, action acl.Action) error {
-	role := sess.Get("Role").(acl.Role)
-	if acl.Permissions.Deny(resource, role, action) {
+	role, ok := sess.Get("Role").(acl.Role)
+	if ok && acl.Permissions.Deny(resource, role, action) {
 		return Unauthorized()
 	}
 	return nil
 }
-

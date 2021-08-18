@@ -76,7 +76,7 @@ type Options struct {
 	DetachServer       bool                `yaml:"DetachServer" json:"-" flag:"detach-server"`
 	DownloadToken      string              `yaml:"DownloadToken" json:"-" flag:"download-token"`
 	PreviewToken       string              `yaml:"PreviewToken" json:"-" flag:"preview-token"`
-	SessionConfig      *SessionConfig      `yaml:"Session"`
+	SessionConfig      *SessionConfig      `yaml:"Store"`
 	FiberViews         *FiberViewConfig    `yaml:"FiberViews"`
 	HasherDriver       *HasherConfig       `yaml:"HasherDriver" json:"hasher_driver"`
 	AccessLoggerConfig *AccessLoggerConfig `yaml:"AccessLogger"`

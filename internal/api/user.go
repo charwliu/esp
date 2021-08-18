@@ -49,65 +49,58 @@ func GetAllUsers(router fiber.Router) {
 func CreateUser(router fiber.Router) {
 	router.Post("/", func(ctx *fiber.Ctx) error {
 		user := &entity.User{}
-		err := ctx.BodyParser(user)
-		if err != nil {
-			return err
+		if err := ctx.BodyParser(user); err != nil {
+			return JSON(ctx, fiber.StatusInternalServerError, i18n.ErrUnexpected, err)
 		}
-		if user = entity.FirstOrCreateUser(user); user == nil {
-			return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-				"message": "Internal error",
-				"code":    fiber.StatusInternalServerError,
-			})
+		if result, err := entity.FirstOrCreateUser(user); err != nil {
+			return JSON(ctx, fiber.StatusInternalServerError, i18n.ErrUnexpected, err)
+		} else {
+			return ctx.Status(fiber.StatusOK).JSON(result)
 		}
-
-		return ctx.Status(fiber.StatusOK).JSON(user)
 
 	})
 }
 
 func GetUserInfo(router fiber.Router) {
 	router.Get("/:id", func(ctx *fiber.Ctx) error {
-		var user *entity.User
 		id := ctx.Params("id")
-		user = entity.FindUserByUID(id)
-		if user == nil {
-			return ctx.Status(fiber.StatusNotFound).JSON(UserNotFound())
+		if user, err := entity.FindUserByUID(id); err != nil {
+			return JSON(ctx, fiber.StatusNotFound, i18n.ErrUserNotFound, err)
+		} else {
+			return ctx.Status(fiber.StatusOK).JSON(user)
 		}
-		return ctx.Status(fiber.StatusOK).JSON(user)
 	})
 }
 
 func EditUser(router fiber.Router) {
 	router.Put("/:id", func(ctx *fiber.Ctx) error {
 		var editUser entity.User
-		err := ctx.BodyParser(&editUser)
-		if err != nil {
-			return err
+		if err := ctx.BodyParser(&editUser); err != nil {
+			return JSON(ctx, fiber.StatusInternalServerError, i18n.ErrUnexpected, err)
 		}
 		id := ctx.Params("id")
-		user := entity.FindUserByUID(id)
-		if user == nil {
-			return ctx.Status(fiber.StatusNotFound).JSON(UserNotFound())
+		if user, err := entity.FindUserByUID(id); err != nil {
+			return JSON(ctx, fiber.StatusNotFound, i18n.ErrUserNotFound, err)
+		} else {
+			user.UserName = editUser.UserName
+			user.Email = editUser.Email
+			user.Status = editUser.Status
+			user.Avatar = editUser.Avatar
+			if err = user.Save(); err != nil {
+				return JSON(ctx, fiber.StatusInternalServerError, i18n.ErrUnexpected, err)
+			}
+			return ctx.Status(fiber.StatusOK).JSON(editUser)
 		}
-		user.UserName = editUser.UserName
-		user.Email = editUser.Email
-		user.Status = editUser.Status
-		user.Avatar = editUser.Avatar
-		err = user.Save()
-		if err != nil {
-			return err
-		}
-		return ctx.Status(fiber.StatusOK).JSON(editUser)
 	})
 }
 
 func DeleteUser(router fiber.Router) {
 	router.Delete("/:id", func(ctx *fiber.Ctx) error {
 		id := ctx.Params("id")
-		err := entity.DB().Delete(&entity.User{}, "user_uid = ?", id).Error
-		if err == nil {
+		if err := entity.DB().Delete(&entity.User{}, "user_uid = ?", id).Error; err == nil {
 			return ctx.Status(fiber.StatusNoContent).JSON("User " + id + "destroyed")
+		} else {
+			return JSON(ctx, fiber.StatusNotFound, i18n.ErrUserNotFound, err)
 		}
-		return ctx.Status(fiber.StatusNotFound).JSON(UserNotFound())
 	})
 }

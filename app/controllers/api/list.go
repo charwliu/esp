@@ -48,7 +48,7 @@ type ListItemDataType struct {
 	Members        []Member    `json:"members"`
 }
 
-var user = []string{
+var users = []string{
 	"付小小",
 	"曲丽丽",
 	"林东东",
@@ -103,7 +103,7 @@ func fakeList(count int) []ListItemDataType {
 	for i := 0; i < count; i++ {
 		list = append(list, ListItemDataType{
 			Id:             "fake-list-" + uniuri.NewLen(4) + strconv.Itoa(i),
-			Owner:          user[i%len(user)],
+			Owner:          users[i%len(users)],
 			Title:          titles[i%len(titles)],
 			Avatar:         avatars[i%len(avatars)],
 			Cover:          covers[i%len(covers)],

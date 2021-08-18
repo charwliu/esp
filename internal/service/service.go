@@ -10,9 +10,9 @@ import (
 
 var conf *config.Config
 
-var servcies struct {
+var services struct {
 	Query *query.Query
-	Session *session.Store
+	Store *session.Store
 }
 
 func SetConfig(c *config.Config) {
@@ -32,4 +32,3 @@ func Config() *config.Config {
 
 	return conf
 }
-

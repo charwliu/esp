@@ -27,7 +27,7 @@ import (
 type Config struct {
 	Key      string `json:"key" yaml:"Key"`
 	Secret   string `json:"secret" yaml:"Secret"`
-	Session  string `json:"session" yaml:"Session"`
+	Session  string `json:"session" yaml:"Store"`
 	Status   string `json:"status" yaml:"Status"`
 	Version  string `json:"version" yaml:"Version"`
 	Serial   string `json:"serial" yaml:"Serial"`

@@ -1,6 +1,7 @@
 package service
 
 import (
+	"github.com/gofiber/fiber/v2"
 	"sync"
 
 	"github.com/gofiber/fiber/v2/middleware/session"
@@ -11,12 +12,16 @@ import (
 var onceSession sync.Once
 
 func initSession() {
-	servcies.Session = session.New(Config().SessionConfig())
+	services.Store = session.New(Config().SessionConfig())
 	var role acl.Role
-	servcies.Session.RegisterType(&role)
+	services.Store.RegisterType(&role)
 }
 
-func Session() *session.Store {
+func Store() *session.Store {
 	onceSession.Do(initSession)
-	return servcies.Session
+	return services.Store
+}
+
+func Session(c *fiber.Ctx) (*session.Session, error) {
+	return Store().Get(c)
 }

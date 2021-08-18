@@ -11,7 +11,7 @@ var log = event.Log.Sugar()
 func Index(router fiber.Router) {
 	router.Get("/", func(ctx *fiber.Ctx) error {
 
-		//sess := api.Session(ctx)
+		//sess := api.Store(ctx)
 		//// Bind data to template
 		//bind := fiber.Map{
 		//	"name": "Fiber",

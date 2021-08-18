@@ -3,6 +3,7 @@ package api
 import (
 	"github.com/gofiber/fiber/v2"
 	"go.uber.org/zap"
+	"go.vixal.xyz/esp/internal/i18n"
 
 	"go.vixal.xyz/esp/internal/api"
 	"go.vixal.xyz/esp/internal/entity"
@@ -30,7 +31,7 @@ func ShowLoginForm(router fiber.Router) {
 }
 
 type Data struct {
-	User   *entity.User `json:"user"`   // Session user, guest or anonymous person.
+	User   *entity.User `json:"users"`  // Store users, guest or anonymous person.
 	Tokens []string     `json:"tokens"` // Slice of secret share tokens.
 }
 
@@ -49,13 +50,12 @@ func UserLogin(router fiber.Router) {
 	router.Post("/login", func(ctx *fiber.Ctx) error {
 		f := form.Login{}
 		if err := ctx.BodyParser(&f); err != nil {
-			return err
+			return api.JSON(ctx, fiber.StatusInternalServerError, i18n.ErrUnexpected, err)
 		}
-
 		var data Data
-		sess, err := service.Session().Get(ctx)
+		session, err := service.Session(ctx)
 		if err != nil {
-			panic(err)
+			return api.JSON(ctx, fiber.StatusInternalServerError, i18n.ErrUnexpected, err)
 		}
 
 		//conf := service.Config()
@@ -63,37 +63,31 @@ func UserLogin(router fiber.Router) {
 		if f.HasToken() {
 
 		} else if f.HasCredentials() {
-			// Find user
-			user := entity.FindUserByName(f.UserName)
-			if user == nil {
-				return api.InvalidCredentials()
+			if user, err := entity.FindUserByName(f.UserName); err == nil {
+				if !user.InvalidPassword(f.Password) {
+					data.User = user
+					id := session.ID()
+					// Set the users ID in the session
+					session.Set("userid", data.User.UserUID)
+					//session.Set("role", data.User.Role())
+					log.Info("User set in store with", zap.String("ID", data.User.UserUID))
+					if err := session.Save(); err != nil {
+						return api.JSON(ctx, fiber.StatusInternalServerError, i18n.ErrUnexpected, err)
+					}
+					role := "users"
+					if len(data.User.Roles) > 1 {
+						role = data.User.Roles[0].RoleName
+					}
+					return ctx.Status(fiber.StatusOK).JSON(Response{
+						Id:               id,
+						Status:           "ok",
+						CurrentAuthority: role,
+					})
+				}
 			}
-
-			// Check if password matches hash
-			if user.InvalidPassword(f.Password) {
-				return api.InvalidCredentials()
-			}
-			data.User = user
-		} else {
-			return api.InvalidPassword()
+			return api.JSON(ctx, fiber.StatusNotFound, i18n.ErrUserNotFound, err)
 		}
-		id := sess.ID()
-		// Set the user ID in the session
-		sess.Set("userid", data.User.UserUID)
-		//sess.Set("role", data.User.Role())
-		log.Info("User set in store store with", zap.String("ID", data.User.UserUID))
-		if err := sess.Save(); err != nil {
-			panic(err)
-		}
-		role := "user"
-		if len(data.User.Roles) > 1 {
-			role = data.User.Roles[0].RoleName
-		}
-		return ctx.Status(fiber.StatusOK).JSON(Response{
-			Id:               id,
-			Status:           "ok",
-			CurrentAuthority: role,
-		})
+		return api.JSON(ctx, fiber.StatusUnauthorized, i18n.ErrInvalidPassword, nil)
 	})
 }
 
@@ -108,15 +102,12 @@ type Response struct {
 // GET /api/v1/currentUser
 func GetCurrentUser(router fiber.Router) {
 	router.Get("/currentUser", func(ctx *fiber.Ctx) error {
-		sess, err := service.Session().Get(ctx)
+		session, err := service.Session(ctx)
 		if err != nil {
-			return ctx.Status(fiber.StatusUnauthorized).JSON(
-				api.InvalidCredentials())
+			return api.JSON(ctx, fiber.StatusUnauthorized, i18n.ErrInvalidCredentials, err)
 		}
-		userId, ok := sess.Get("userid").(string)
-		if ok {
-			user := entity.FindUserByUID(userId)
-			if user != nil {
+		if userId, ok := session.Get("userid").(string); ok {
+			if user, err := entity.FindUserByUID(userId); err == nil {
 				return ctx.Status(fiber.StatusOK).JSON(fiber.Map{
 					"success": true,
 					"data":    user,
@@ -140,13 +131,12 @@ func UserLogout(router fiber.Router) {
 		if id != "" {
 			ctx.Request().Header.SetCookie("session_id", id)
 		}
-		sess, err := service.Session().Get(ctx)
+		session, err := service.Session(ctx)
 		if err != nil {
-			return api.InvalidCredentials()
+			return api.JSON(ctx, fiber.StatusUnauthorized, i18n.ErrInvalidCredentials, err)
 		}
-		id = sess.ID()
-		err = sess.Destroy()
-		if err != nil {
+		id = session.ID()
+		if err = session.Destroy(); err != nil {
 			return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 				"status": err.Error(),
 				"id":     id,
@@ -163,16 +153,15 @@ func UserLogout(router fiber.Router) {
 // DELETE /api/v1/session/:id
 func DeleteSession(router fiber.Router) {
 	router.Delete("/session/:id", func(ctx *fiber.Ctx) error {
-		id := ctx.Params("id", "")
-		if id != "" {
+		if id := ctx.Params("id", ""); id != "" {
 			ctx.Request().Header.SetCookie("session_id", id)
 		}
-		sess, err := service.Session().Get(ctx)
+		session, err := service.Session(ctx)
 		if err != nil {
-			return api.InvalidCredentials()
+			return api.JSON(ctx, fiber.StatusUnauthorized, i18n.ErrInvalidCredentials, err)
 		}
-		err = sess.Destroy()
-		if err != nil {
+		id := session.ID()
+		if err = session.Destroy(); err != nil {
 			return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 				"status": err.Error(),
 				"id":     id,

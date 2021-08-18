@@ -2,6 +2,7 @@ package api
 
 import (
 	"github.com/gofiber/fiber/v2"
+	"go.vixal.xyz/esp/internal/i18n"
 
 	"go.vixal.xyz/esp/internal/api"
 	"go.vixal.xyz/esp/internal/entity"
@@ -10,31 +11,29 @@ import (
 
 var log = event.Log.Sugar()
 
-
 // GetAllUsers -- Send index of users
 // GET /v1/users  -- Send index of users
 func GetAllUsers(router fiber.Router) {
 	router.Get("/", func(ctx *fiber.Ctx) error {
 		var users entity.Users
-		err := entity.DB().Find(&users).Error
-		if err != nil {
-			return api.Unexpected()
+		if err := entity.DB().Find(&users).Error; err != nil {
+			return api.JSON(ctx, fiber.StatusInternalServerError, i18n.ErrUnexpected, err)
 		}
 		if len(users) > 0 {
-			//for _, user := range users {
-			//	//user.Urls = struct {
+			//for _, users := range users {
+			//	//users.Urls = struct {
 			//	//	OrganizationRolesUrl string `json:"organization_roles_url,omitempty"`
 			//	//	RolesUrl             string `json:"roles_url,omitempty"`
 			//	//}{
-			//	//	OrganizationRolesUrl: "v1/users/" + user.UserUID + "/organization_roles",
-			//	//	RolesUrl:             "v1/users/" + user.UserUID + "/roles",
+			//	//	OrganizationRolesUrl: "v1/users/" + users.UserUID + "/organization_roles",
+			//	//	RolesUrl:             "v1/users/" + users.UserUID + "/roles",
 			//	//}
 			//}
 			return ctx.Status(fiber.StatusOK).JSON(fiber.Map{
 				"users": users,
 			})
 		} else {
-			return ctx.Status(fiber.StatusNotFound).JSON(api.UserNotFound())
+			return api.JSON(ctx, fiber.StatusNotFound, i18n.ErrUserNotFound, nil)
 		}
 	})
 }
@@ -43,83 +42,66 @@ func CreateUser(router fiber.Router) {
 	router.Post("/", func(ctx *fiber.Ctx) error {
 		user := new(entity.User)
 		if err := ctx.BodyParser(user); err != nil {
-			log.Error("An error occurred when parsing the new user: " + err.Error())
-			return err
+			log.Errorf("An error occurred when parsing the new users: %v", err)
+			return api.JSON(ctx, fiber.StatusInternalServerError, i18n.ErrUnexpected, err)
 		}
-		if result := entity.FirstOrCreateUser(user); result == nil {
-			return api.Unexpected()
+		if result, err := entity.FirstOrCreateUser(user); err != nil {
+			return api.JSON(ctx, fiber.StatusInternalServerError, i18n.ErrUnexpected, err)
+		} else {
+			return ctx.Status(fiber.StatusCreated).JSON(result)
 		}
-		err := ctx.Status(fiber.StatusCreated).JSON(user)
-		if err != nil {
-			log.Error("Error occurred when returning JSON of a user: " + err.Error())
-		}
-		return err
 	})
 }
 
-// GetUser Return a single user as JSON
+// GetUser Return a single users as JSON
 func GetUser(router fiber.Router) {
 	router.Get("/:user_id", func(ctx *fiber.Ctx) error {
 		id := ctx.Params("id")
-		user := entity.FindUserByUID(id)
-		if user == nil {
-			ctx.Status(fiber.StatusNotFound)
+		if user, err := entity.FindUserByUID(id); err == nil {
+			return ctx.Status(fiber.StatusOK).JSON(user)
+		} else {
+			return api.JSON(ctx, fiber.StatusNotFound, i18n.ErrUserNotFound, err)
 		}
-		return ctx.Status(fiber.StatusOK).JSON(user)
 	})
 }
 
-// EditUser Edit a single user
+// EditUser Edit a single users
 func EditUser(router fiber.Router) {
 	router.Put("/:user_id", func(ctx *fiber.Ctx) error {
 		id := ctx.Params("id")
 		editUser := new(entity.User)
 		if err := ctx.BodyParser(editUser); err != nil {
-			log.Error("An error occurred when parsing the edited user: " + err.Error())
+			log.Error("An error occurred when parsing the edited users: " + err.Error())
 		}
-		user := entity.FindUserByUID(id)
-		if user == nil {
-			err := ctx.SendStatus(fiber.StatusNotFound)
-			if err != nil {
-				log.Error("Cannot return status not found: " + err.Error())
+		if user, err := entity.FindUserByUID(id); err != nil {
+			return api.JSON(ctx, fiber.StatusNotFound, i18n.ErrUserNotFound, err)
+		} else {
+			user.UserName = editUser.UserName
+			// Match role to users
+			// Save users
+			if err = user.Save(); err != nil {
+				return api.JSON(ctx, fiber.StatusInternalServerError, i18n.ErrUnexpected, err)
 			}
-			err = ctx.JSON(fiber.Map{
-				"ID": id,
-			})
-			if err != nil {
-				log.Error("Error occurred when returning JSON of a user: " + err.Error())
-			}
-			return err
+			return ctx.Status(fiber.StatusOK).JSON(user)
 		}
-		user.UserName = editUser.UserName
-		// Match role to user
-		// Save user
-		err := user.Save()
-		if err != nil {
-			return err
-		}
-		return ctx.Status(fiber.StatusOK).JSON(user)
 
 	})
 }
 
-// DeleteUser Delete a single user
+// DeleteUser Delete a single users
 func DeleteUser(router fiber.Router) {
 	router.Delete("/:user_id", func(ctx *fiber.Ctx) error {
 		id := ctx.Params("id")
-		user := entity.FindUserByUID(id)
-		if user == nil {
-			return api.UserNotFound()
+		if user, err := entity.FindUserByUID(id); err != nil {
+			return api.JSON(ctx, fiber.StatusNotFound, i18n.ErrUserNotFound, err)
+		} else {
+			if err = user.Delete(); err != nil {
+				return api.JSON(ctx, fiber.StatusInternalServerError, i18n.ErrUnexpected, err)
+			}
+			return ctx.Status(fiber.StatusNoContent).JSON(fiber.Map{
+				"ID":      id,
+				"Deleted": true,
+			})
 		}
-
-		if err := user.Delete(); err != nil {
-			return err
-		}
-
-		return ctx.Status(fiber.StatusNoContent).JSON(fiber.Map{
-			"ID":      id,
-			"Deleted": true,
-		})
-
 	})
 }

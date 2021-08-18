@@ -2,21 +2,24 @@ package api
 
 import (
 	"github.com/gofiber/fiber/v2"
+	"go.vixal.xyz/esp/internal/i18n"
 
 	"go.vixal.xyz/esp/internal/entity"
 )
 
 // GetProfile
 // GET /api/v1/profile
-func GetProfile(router fiber.Router)  {
+func GetProfile(router fiber.Router) {
 	router.Get("/profile", func(c *fiber.Ctx) error {
 		sess := Session(c)
-		var user *entity.User
 		if sess != nil {
-			userid := sess.Get("userid").(string)
-			user = entity.FindUserByUID(userid)
+			if userid, ok := sess.Get("userid").(string); ok {
+				if user, err := entity.FindUserByUID(userid); err != nil {
+					return c.Status(fiber.StatusOK).JSON(user)
+				}
+			}
 		}
-		return c.Status(fiber.StatusOK).JSON(user)
+		return JSON(c, fiber.StatusUnauthorized, i18n.ErrUnauthorized, nil)
 	})
 }
 

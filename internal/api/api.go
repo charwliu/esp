@@ -30,7 +30,11 @@ func Abort(code int, id i18n.Message, params ...interface{}) i18n.Response {
 	return i18n.NewResponse(code, id, params)
 }
 
-func Error(code int, err error, id i18n.Message, params ...interface{}) i18n.Response {
+func JSON(ctx *fiber.Ctx, code int, id i18n.Message, err error, params ...interface{}) error {
+	return ctx.Status(code).JSON(Error(code, id, err, params))
+}
+
+func Error(code int, id i18n.Message, err error, params ...interface{}) i18n.Response {
 	resp := i18n.NewResponse(code, id, params)
 	if err != nil {
 		resp.Details = err.Error()
@@ -38,7 +42,7 @@ func Error(code int, err error, id i18n.Message, params ...interface{}) i18n.Res
 	return resp
 }
 
-func Unauthorized() i18n.Response  {
+func Unauthorized() i18n.Response {
 	return Abort(fiber.StatusUnauthorized, i18n.ErrUnauthorized)
 }
 
@@ -58,10 +62,10 @@ func FeatureDisabled() i18n.Response {
 	return i18n.NewResponse(fiber.StatusForbidden, i18n.ErrFeatureDisabled)
 }
 
-func InvalidCredentials () i18n.Response {
+func InvalidCredentials() i18n.Response {
 	return i18n.NewResponse(fiber.StatusBadRequest, i18n.ErrInvalidCredentials)
 }
 
-func InvalidPassword()  i18n.Response{
+func InvalidPassword() i18n.Response {
 	return i18n.NewResponse(fiber.StatusBadRequest, i18n.ErrInvalidPassword)
 }
