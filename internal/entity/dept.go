@@ -7,22 +7,22 @@ import (
 
 // Dept 部门表
 type Dept struct {
-	ID        int64     `gorm:"primary_key" json:"id"`     // 部门id
-	Ancestors string    `gorm:"size:50" json:"ancestors"`  // 祖级列表
-	DeptName  string    `gorm:"size:32" json:"deptName"`   // 部门名称
-	OrderNum  int       `gorm:"default:0" json:"orderNum"` // 显示顺序
-	Leader    string    `gorm:"size:32" json:"leader"`     // 负责人
-	Phone     string    `gorm:"size:11" json:"phone"`      // 联系电话
-	Email     string    `gorm:"size:50" json:"email"`      // 邮箱
-	Status    string    `gorm:"size:1" json:"status"`      // 部门状态（0正常 1停用）
-	Roles     []Role    `gorm:"many2many:role_dept"`
-	CreatedBy string    `gorm:"size:64;default:''" json:"createBy"` // 创建者
-	UpdatedBy string    `gorm:"size:64;default:''" json:"updateBy"` // 更新者
-	CreatedAt time.Time `json:"created_at"`                         // 创建时间
-	UpdatedAt time.Time `json:"updated_at"`                         // 更新时间
-	Remark    string    `gorm:"size:500;default:''" json:"remark"`  // 备注信息
-	ParentID  int64     `json:"parentId"`                           // 父部门id
-	Parent    *Dept
+	ID        int64     `gorm:"primary_key" json:"id"`           // 部门id
+	Ancestors string    `gorm:"size:50" json:"ancestors"`        // 祖级列表
+	DeptName  string    `gorm:"size:32" json:"deptName"`         // 部门名称
+	OrderNum  int       `gorm:"default:0" json:"orderNum"`       // 显示顺序
+	Leader    string    `gorm:"size:32" json:"leader,omitempty"` // 负责人
+	Phone     string    `gorm:"size:11" json:"phone,omitempty"`  // 联系电话
+	Email     string    `gorm:"size:50" json:"email,omitempty"`  // 邮箱
+	Status    string    `gorm:"size:1" json:"status,omitempty"`  // 部门状态（0正常 1停用）
+	Roles     []Role    `gorm:"many2many:role_dept" json:"roles,omitempty"`
+	CreatedBy string    `gorm:"size:64;default:''" json:"-"`                 // 创建者
+	UpdatedBy string    `gorm:"size:64;default:''" json:"-"`                 // 更新者
+	CreatedAt time.Time `json:"-"`                                           // 创建时间
+	UpdatedAt time.Time `json:"-"`                                           // 更新时间
+	Remark    string    `gorm:"size:500;default:''" json:"remark,omitempty"` // 备注信息
+	ParentID  int64     `json:"parentId,omitempty"`                          // 父部门id
+	Parent    *Dept     `json:"parent,omitempty"`
 }
 
 // TableName get sql table name.

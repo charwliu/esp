@@ -15,33 +15,33 @@ type Users []*User
 // User 用户信息表
 type User struct {
 	ID            int64          `gorm:"primary_key" json:"-"`
-	DeptID        int64          `gorm:"default:1" json:"-" yaml:"-"`                      // 部门ID
-	UserUID       string         `gorm:"size:32;not null" json:"userUID"`                  // 用户ID
-	UserName      string         `gorm:"size:32;not null;unique" json:"username"`          // 登录账号
-	JobLevel      string         `gorm:"size:32" json:"jobLevel,omitempty"`                // 职位级别
-	UserType      string         `gorm:"size:2;default:00" json:"userType,omitempty"`      // 用户类型（00系统用户）
-	Email         string         `gorm:"size:50;default:''" json:"email,omitempty"`        // 用户邮箱
-	PhoneNumber   string         `gorm:"size:16;default:''" json:"phone_number,omitempty"` // 手机号码
-	Avatar        string         `gorm:"size:100;default:''" json:"avatar,omitempty"`      // 头像路径
-	Password      string         `gorm:"size:100;default:''" json:"password,omitempty"`    // 密码
-	Gender        int16          `gorm:"size:1" json:"gender,omitempty"`                   // 用户性别（0男 1女 2未知）
-	Status        int16          `gorm:"size:1;default:0" json:"status,omitempty"`         // 帐号状态（0正常 1停用）
-	LoginIP       string         `gorm:"size:50;default:''" json:"loginIp,omitempty"`      // 最后登陆IP
-	LoginDate     time.Time      `json:"loginDate,omitempty"`                              // 最后登陆时间
-	Remark        string         `gorm:"size:500" json:"remark,omitempty"`                 // 备注
-	OpenID        string         `gorm:"size:100" json:"openId,omitempty"`                 // 微信OpenId
-	NickName      string         `gorm:"size:100" json:"nickName,omitempty"`               // 昵称
-	WxAvatar      string         `gorm:"size:200" json:"wxAvatar,omitempty"`               // 微信头像
+	DeptID        int64          `gorm:"default:1" json:"-" yaml:"-"`                     // 部门ID
+	UserUID       string         `gorm:"size:32;not null" json:"userid"`                  // 用户ID
+	UserName      string         `gorm:"size:32;not null;unique" json:"username"`         // 登录账号
+	JobLevel      string         `gorm:"size:32" json:"jobLevel,omitempty"`               // 职位级别
+	UserType      string         `gorm:"size:2;default:00" json:"userType,omitempty"`     // 用户类型（00系统用户）
+	Email         string         `gorm:"size:50;default:''" json:"email,omitempty"`       // 用户邮箱
+	PhoneNumber   string         `gorm:"size:16;default:''" json:"phoneNumber,omitempty"` // 手机号码
+	Avatar        string         `gorm:"size:100;default:''" json:"avatar,omitempty"`     // 头像路径
+	Gender        int16          `gorm:"size:1" json:"gender,omitempty"`                  // 用户性别（0男 1女 2未知）
+	Status        int16          `gorm:"size:1;default:0" json:"status,omitempty"`        // 帐号状态（0正常 1停用）
+	LoginIP       string         `gorm:"size:50;default:''" json:"loginIp,omitempty"`     // 最后登陆IP
+	LoginDate     time.Time      `json:"loginDate,omitempty"`                             // 最后登陆时间
+	Remark        string         `gorm:"size:500" json:"remark,omitempty"`                // 备注
+	OpenID        string         `gorm:"size:100" json:"openId,omitempty"`                // 微信OpenId
+	NickName      string         `gorm:"size:100" json:"nickName,omitempty"`              // 昵称
+	Name          string         `gorm:"size:100" json:"name,omitempty"`                  // 昵称
+	WxAvatar      string         `gorm:"size:200" json:"wxAvatar,omitempty"`              // 微信头像
 	LoginAttempts int16          `json:"-" yaml:"-"`
-	Roles         []Role         `gorm:"constraint:OnUpdate:CASCADE,OnDelete:SET NULL;many2many:user_role;" json:"-"`
+	Roles         []Role         `gorm:"constraint:OnUpdate:CASCADE,OnDelete:SET NULL;many2many:user_role;" json:"roles"`
 	Address       *Address       `gorm:"association_autoupdate:false;association_autocreate:false;association_save_reference:false;PRELOAD:true;" json:"address,omitempty" yaml:"Address,omitempty"`
 	AddressID     int            `gorm:"default:1" json:"-" yaml:"-"`
 	CreatedBy     string         `gorm:"size:64;default:''" json:"-"` // 创建者
 	UpdatedBy     string         `gorm:"size:64;default:''" json:"-"` // 更新者
-	CreatedAt     time.Time      `json:"-"`               // 创建时间
-	UpdatedAt     time.Time      `json:"-"`               // 更新时间
-	DeletedAt     gorm.DeletedAt `gorm:"index" json:"-"`  // 删除时间
-	Dept          *Dept          `json:"-"`
+	CreatedAt     time.Time      `json:"-"`                           // 创建时间
+	UpdatedAt     time.Time      `json:"-"`                           // 更新时间
+	DeletedAt     gorm.DeletedAt `gorm:"index" json:"-"`              // 删除时间
+	Dept          *Dept          `json:"dept"`
 }
 
 // TableName get sql table name.
@@ -83,7 +83,7 @@ func (m *User) Delete() error {
 }
 
 // BeforeCreate creates a random UID if needed before inserting a new row to the database.
-func (m *User) BeforeCreate(scope *gorm.DB) error {
+func (m *User) BeforeCreate(*gorm.DB) error {
 	if rnd.IsUID(m.UserUID, 'u') {
 		return nil
 	}
@@ -116,8 +116,9 @@ func FindUserByName(userName string) *User {
 	result := User{}
 
 	if err := DB().Preload("Address").
+		Preload("Dept").
 		Preload("Roles").
-		Joins("INNER JOIN user_roles ur ON ur.user_id = users.id").
+		Joins("LEFT JOIN user_role ur ON ur.user_id = id").
 		Where("user_name = ?", userName).First(&result).Error; err == nil {
 		return &result
 	} else {
@@ -135,8 +136,9 @@ func FindUserByUID(uid string) *User {
 	result := User{}
 
 	if err := DB().Preload("Address").
+		Preload("Dept").
 		Preload("Roles").
-		Joins("INNER JOIN user_roles ur ON ur.user_id = users.id").
+		Joins("LEFT JOIN user_role ur ON ur.user_id = id").
 		Where("user_uid = ?", uid).First(&result).Error; err == nil {
 		return &result
 	} else {

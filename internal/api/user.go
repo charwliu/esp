@@ -60,7 +60,6 @@ func CreateUser(router fiber.Router) {
 			})
 		}
 
-		user.Password = ""
 		return ctx.Status(fiber.StatusOK).JSON(user)
 
 	})
@@ -102,12 +101,12 @@ func EditUser(router fiber.Router) {
 	})
 }
 
-func DeleteUser(router fiber.Router)  {
+func DeleteUser(router fiber.Router) {
 	router.Delete("/:id", func(ctx *fiber.Ctx) error {
 		id := ctx.Params("id")
-		err := entity.DB().Delete(&entity.User{}, "user_uid = ?", id ).Error
+		err := entity.DB().Delete(&entity.User{}, "user_uid = ?", id).Error
 		if err == nil {
-			return ctx.Status(fiber.StatusNoContent).JSON("User "+ id + "destroyed")
+			return ctx.Status(fiber.StatusNoContent).JSON("User " + id + "destroyed")
 		}
 		return ctx.Status(fiber.StatusNotFound).JSON(UserNotFound())
 	})

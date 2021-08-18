@@ -8,16 +8,16 @@ type Addresses []Address
 
 // Address represents a postal address.
 type Address struct {
-	ID             int     `gorm:"primary_key" json:"ID" yaml:"ID"`
-	AddressLat     float32 `gorm:"index;" json:"Lat,omitempty" yaml:"Lat,omitempty"`
-	AddressLng     float32 `gorm:"index;" json:"Lng,omitempty" yaml:"Lng,omitempty"`
-	AddressLine1   string  `gorm:"size:255;" json:"Line1,omitempty" yaml:"Line1,omitempty"`
-	AddressLine2   string  `gorm:"size:255;" json:"Line2,omitempty" yaml:"Line2,omitempty"`
-	AddressZip     string  `gorm:"size:32;" json:"Zip,omitempty" yaml:"Zip,omitempty"`
-	AddressCity    string  `gorm:"size:128;" json:"City,omitempty" yaml:"City,omitempty"`
-	AddressState   string  `gorm:"size:128;" json:"State,omitempty" yaml:"State,omitempty"`
-	AddressCountry string  `gorm:"size:2;default:'zz'" json:"Country,omitempty" yaml:"Country,omitempty"`
-	AddressNotes   string  `json:"Notes,omitempty" yaml:"Notes,omitempty"`
+	ID              int     `gorm:"primary_key" json:"ID" yaml:"ID"`
+	AddressLat      float32 `gorm:"index;" json:"Lat,omitempty" yaml:"Lat,omitempty"`
+	AddressLng      float32 `gorm:"index;" json:"Lng,omitempty" yaml:"Lng,omitempty"`
+	AddressLine1    string  `gorm:"size:255;" json:"Line1,omitempty" yaml:"Line1,omitempty"`
+	AddressLine2    string  `gorm:"size:255;" json:"Line2,omitempty" yaml:"Line2,omitempty"`
+	AddressZip      string  `gorm:"size:32;" json:"Zip,omitempty" yaml:"Zip,omitempty"`
+	AddressCity     string  `gorm:"size:128;" json:"City,omitempty" yaml:"City,omitempty"`
+	AddressProvince string  `gorm:"size:32;" json:"Province,omitempty" yaml:"Province,omitempty"`
+	AddressCountry  string  `gorm:"size:2;default:'zz'" json:"Country,omitempty" yaml:"Country,omitempty"`
+	AddressNotes    string  `json:"Notes,omitempty" yaml:"Notes,omitempty"`
 }
 
 // TableName the database table name.

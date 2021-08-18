@@ -446,6 +446,7 @@ func (c *Config) FiberConfig() *fiber.Config {
 			DisableHeaderNormalizing:  false,
 			DisableStartupMessage:     false,
 			ReduceMemoryUsage:         false,
+			MiddleWare:                &MiddleWare{},
 		}
 	}
 	cfg := c.options.FiberConfig
@@ -994,163 +995,163 @@ func (c *Config) Session() *SessionConfig {
 }
 
 func (c *Config) ForceHTTPS() bool {
-	return c.options.ForceHTTPS
+	return c.options.FiberConfig.ForceHTTPS()
 }
 
 func (c *Config) ForceTrailingSlash() bool {
-	return c.options.ForceTrailingSlash
+	return c.options.FiberConfig.ForceTrailingSlash()
 }
 
 func (c *Config) HSTSEnabled() bool {
-	return c.options.EnableHSTS
+	return c.options.FiberConfig.EnableHSTS()
 }
 
 func (c *Config) HSTSMaxAge() int {
-	return c.options.HSTSMaxAge
+	return c.options.FiberConfig.HSTSMaxAge()
 }
 
 func (c *Config) HSTSIncludeSubdomains() bool {
-	return c.options.HSTSIncludeSubdomains
+	return c.options.FiberConfig.HSTSIncludeSubdomains()
 }
 
 func (c *Config) HSTSPreload() bool {
-	return c.options.HSTSPreload
+	return c.options.FiberConfig.HSTSPreload()
 }
 
 func (c *Config) SuppressWWW() bool {
-	return c.options.SuppressWWW
+	return c.options.FiberConfig.SuppressWWW()
 }
 
 func (c *Config) FiberRecoverDisabled() bool {
-	return c.options.FiberRecoverDisabled
+	return c.options.FiberConfig.RecoverDisabled()
 }
 
 func (c *Config) FiberCacheEnabled() bool {
-	return c.options.FiberCacheEnabled
+	return c.options.FiberConfig.CacheEnabled()
 }
 
 func (c *Config) FiberCacheExpiration() time.Duration {
-	return c.options.FiberCacheExpiration
+	return c.options.FiberConfig.CacheExpiration()
 }
 
-func (c *Config) FiberCacheCacheControl() bool {
-	return c.options.FiberCacheCacheControl
+func (c *Config) FiberCacheControl() bool {
+	return c.options.FiberConfig.CacheControl()
 }
 
 func (c *Config) FiberCompressEnabled() bool {
-	return c.options.FiberCompressEnabled
+	return c.options.FiberConfig.CompressEnabled()
 }
 
 func (c *Config) FiberCompressLevel() int {
-	return c.options.FiberCompressLevel
+	return c.options.FiberConfig.CompressLevel()
 }
 
 func (c *Config) FiberCORSEnabled() bool {
-	return c.options.FiberCORSEnabled
+	return c.options.FiberConfig.CORSEnabled()
 }
 
 func (c *Config) FiberCORSAllowOrigins() string {
-	return c.options.FiberCORSAllowOrigins
+	return c.options.FiberConfig.CORSAllowOrigins()
 }
 
 func (c *Config) FiberCORSAllowMethods() string {
-	return c.options.FiberCORSAllowMethods
+	return c.options.FiberConfig.CORSAllowMethods()
 }
 
 func (c *Config) FiberCORSAllowHeaders() string {
-	return c.options.FiberCORSAllowHeaders
+	return c.options.FiberConfig.CORSAllowHeaders()
 }
 
 func (c *Config) FiberCORSAllowCredentials() bool {
-	return c.options.FiberCORSAllowCredentials
+	return c.options.FiberConfig.CORSAllowCredentials()
 }
 
 func (c *Config) FiberCORSExposeHeaders() string {
-	return c.options.FiberCORSExposeHeaders
+	return c.options.FiberConfig.CORSExposeHeaders()
 }
 
 func (c *Config) FiberCORSMaxAge() int {
-	return c.options.FiberCORSMaxAge
+	return c.options.FiberConfig.CORSMaxAge()
 }
 
 func (c *Config) FiberCSRFEnabled() bool {
-	return c.options.FiberCSRFEnabled
+	return c.options.FiberConfig.CSRFEnabled()
 }
 
 func (c *Config) FiberCSRFKeyLookup() string {
-	return c.options.FiberCSRFKeyLookup
+	return c.options.FiberConfig.CSRFKeyLookup()
 }
 
 func (c *Config) FiberCSRFCookieName() string {
-	return c.options.FiberCSRFCookieName
+	return c.options.FiberConfig.CSRFCookieName()
 }
 
 func (c *Config) FiberCSRFCookieSameSite() string {
-	return c.options.FiberCSRFCookieSameSite
+	return c.options.FiberConfig.CSRFCookieSameSite()
 }
 
 func (c *Config) FiberCSRFExpiration() time.Duration {
-	return c.options.FiberCSRFExpiration
+	return c.options.FiberConfig.CSRFExpiration()
 }
 
 func (c *Config) FiberCSRFContextKey() string {
-	return c.options.FiberCSRFContextKey
+	return c.options.FiberConfig.CSRFContextKey()
 }
 
 func (c *Config) FiberETagEnabled() bool {
-	return c.options.FiberETagEnabled
+	return c.options.FiberConfig.ETagEnabled()
 }
 
 func (c *Config) FiberETagWeak() bool {
-	return c.options.FiberETagWeak
+	return c.options.FiberConfig.ETagWeak()
 }
 
 func (c *Config) FiberExpvarEnabled() bool {
-	return c.options.FiberExpvarEnabled
+	return c.options.FiberConfig.ExpvarEnabled()
 }
 
 func (c *Config) FiberFaviconEnabled() bool {
-	return c.options.FiberFaviconEnabled
+	return c.options.FiberConfig.FaviconEnabled()
 }
 
 func (c *Config) FiberFaviconFile() string {
-	return c.options.FiberFaviconFile
+	return c.options.FiberConfig.FaviconFile()
 }
 
 func (c *Config) FiberFaviconCacheControl() string {
-	return c.options.FiberFaviconCacheControl
+	return c.options.FiberConfig.FaviconCacheControl()
 }
 
 func (c *Config) FiberLimiterEnabled() bool {
-	return c.options.FiberLimiterEnabled
+	return c.options.FiberConfig.LimiterEnabled()
 }
 
 func (c *Config) FiberLimiterMax() int {
-	return c.options.FiberLimiterMax
+	return c.options.FiberConfig.LimiterMax()
 }
 
 func (c *Config) FiberLimiterExpiration() time.Duration {
-	return c.options.FiberLimiterExpiration
+	return c.options.FiberConfig.LimiterExpiration()
 }
 
 func (c *Config) FiberMonitorEnabled() bool {
-	return c.options.FiberMonitorEnabled
+	return c.options.FiberConfig.MonitorEnabled()
 }
 
 func (c *Config) FiberPprofEnabled() bool {
-	return c.options.FiberPprofEnabled
+	return c.options.FiberConfig.PprofEnabled()
 }
 
 func (c *Config) FiberRequestIDEnabled() bool {
-	return c.options.FiberRequestIDEnabled
+	return c.options.FiberConfig.RequestIDEnabled()
 }
 
 func (c *Config) FiberRequestIDHeader() string {
-	return c.options.FiberRequestIDHeader
+	return c.options.FiberConfig.RequestIDHeader()
 }
 
 func (c *Config) FiberRequestIDContextKey() string {
-	return c.options.FiberRequestIDContextKey
+	return c.options.FiberConfig.RequestIDContextKey()
 }
 
 func (c *Config) HasherDriver() *HasherConfig {
