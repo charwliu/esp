@@ -110,15 +110,18 @@ func GetCurrentUser(router fiber.Router) {
 	router.Get("/currentUser", func(ctx *fiber.Ctx) error {
 		sess, err := service.Session().Get(ctx)
 		if err != nil {
-			return api.InvalidCredentials()
+			return ctx.Status(fiber.StatusUnauthorized).JSON(
+				api.InvalidCredentials())
 		}
-		userId := sess.Get("userid").(string)
-		user := entity.FindUserByUID(userId)
-		if user != nil {
-			return ctx.Status(fiber.StatusOK).JSON(fiber.Map{
-				"success": true,
-				"data":    user,
-			})
+		userId, ok := sess.Get("userid").(string)
+		if ok {
+			user := entity.FindUserByUID(userId)
+			if user != nil {
+				return ctx.Status(fiber.StatusOK).JSON(fiber.Map{
+					"success": true,
+					"data":    user,
+				})
+			}
 		}
 		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 			"success": true,
