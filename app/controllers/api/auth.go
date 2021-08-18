@@ -44,9 +44,9 @@ type Data struct {
 // @Success 200 {object} form.User
 // @Failure 401 {string} "Unauthorized"
 // @Failure 422 {object} i18n.Response
-// @Router /user/login [post]
+// @Router /api/v1/login [post]
 func UserLogin(router fiber.Router) {
-	router.Post("/user/login", func(ctx *fiber.Ctx) error {
+	router.Post("/login", func(ctx *fiber.Ctx) error {
 		f := form.Login{}
 		if err := ctx.BodyParser(&f); err != nil {
 			return err
@@ -87,9 +87,9 @@ func UserLogin(router fiber.Router) {
 		}
 
 		return ctx.Status(fiber.StatusOK).JSON(Response{
-			Id:     id,
-			Status: "ok",
-			//CurrentAuthority: string(data.User.Role()),
+			Id:               id,
+			Status:           "ok",
+			CurrentAuthority: string(data.User.Roles[0].RoleName),
 		})
 	})
 }
@@ -124,6 +124,31 @@ func GetCurrentUser(router fiber.Router) {
 			},
 			"errorCode":    "401",
 			"errorMessage": "请先登录！",
+		})
+	})
+}
+
+func UserLogout(router fiber.Router) {
+	router.Post("/logout", func(ctx *fiber.Ctx) error {
+		id := ctx.Params("id", "")
+		if id != "" {
+			ctx.Request().Header.SetCookie("session_id", id)
+		}
+		sess, err := service.Session().Get(ctx)
+		if err != nil {
+			return api.InvalidCredentials()
+		}
+		id = sess.ID()
+		err = sess.Destroy()
+		if err != nil {
+			return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"status": err.Error(),
+				"id":     id,
+			})
+		}
+		return ctx.Status(fiber.StatusOK).JSON(fiber.Map{
+			"status": "ok",
+			"id":     id,
 		})
 	})
 }
