@@ -2,37 +2,37 @@ package api
 
 import (
 	"github.com/gofiber/fiber/v2"
+
 	"go.vixal.xyz/esp/app/models"
-	"go.vixal.xyz/esp/internal/api"
 	"go.vixal.xyz/esp/internal/entity"
 	"go.vixal.xyz/esp/internal/i18n"
 )
 
-// GetAllRoles Return all roles as JSON
+// GetAllRoles Return all roles as JSONError
 func GetAllRoles(router fiber.Router) {
 	router.Get("/", func(ctx *fiber.Ctx) error {
 		var Roles []entity.Role
 		if err := entity.DB().Find(&Roles).Error; err != nil {
 			log.Errorf("Error occurred while retrieving roles from the database: %v ", err)
-			return api.JSON(ctx, fiber.StatusInternalServerError, i18n.ErrUnexpected, err)
+			return Unexpected(ctx, err)
 		}
-		return ctx.Status(fiber.StatusOK).JSON(Roles)
+		return Ok(ctx, Roles)
 	})
 }
 
-// GetRole Return a single role as JSON
+// GetRole Return a single role as JSONError
 func GetRole(router fiber.Router) {
 	router.Get("/:id", func(ctx *fiber.Ctx) error {
 		Role := new(entity.Role)
 		id := ctx.Params("id")
 		if err := entity.DB().Find(&Role, "id = ?", id).Error; err != nil {
 			log.Errorf("An error occurred when retrieving the role: %v", err)
-			return api.JSON(ctx, fiber.StatusInternalServerError, i18n.ErrUnexpected, err)
+			return Unexpected(ctx, err)
 		}
 		if Role.ID == 0 {
-			return api.JSON(ctx, fiber.StatusNotFound, i18n.ErrNotFound, nil)
+			return NotFound(ctx, nil)
 		}
-		return ctx.Status(fiber.StatusOK).JSON(Role)
+		return Ok(ctx, Role)
 	})
 
 }
@@ -43,13 +43,13 @@ func AddRole(router fiber.Router) {
 		Role := new(models.Role)
 		if err := ctx.BodyParser(Role); err != nil {
 			log.Errorf("An error occurred when parsing the new role: %v", err)
-			return api.JSON(ctx, fiber.StatusInternalServerError, i18n.ErrUnexpected, err)
+			return Unexpected(ctx, err)
 		}
 		if err := entity.DB().Create(&Role).Error; err != nil {
 			log.Errorf("An error occurred when storing the new role: %v ", err)
-			return api.JSON(ctx, fiber.StatusInternalServerError, i18n.ErrUnexpected, err)
+			return Unexpected(ctx, err)
 		}
-		return ctx.Status(fiber.StatusOK).JSON(Role)
+		return Ok(ctx, Role)
 	})
 }
 
@@ -61,20 +61,21 @@ func EditRole(router fiber.Router) {
 		Role := new(entity.Role)
 		if err := ctx.BodyParser(EditRole); err != nil {
 			log.Errorf("An error occurred when parsing the edited role: %v", err)
-			return api.JSON(ctx, fiber.StatusInternalServerError, i18n.ErrUnexpected, err)
+			return Unexpected(ctx, err)
 		}
 		if err := entity.DB().Find(&Role, id).Error; err != nil {
 			log.Errorf("An error occurred when retrieving the existing role: %v", err)
-			return api.JSON(ctx, fiber.StatusInternalServerError, i18n.ErrUnexpected, err)
+			return Unexpected(ctx, err)
 		}
 		// Role does not exist
 		if Role == nil {
-			return api.JSON(ctx, fiber.StatusNotFound, i18n.ErrNotFound, nil)
+			return NotFound(ctx, nil)
 		}
 		Role.RoleName = EditRole.RoleName
 		Role.Description = EditRole.Description
 		Role.Save()
-		return ctx.Status(fiber.StatusOK).JSON(Role)
+
+		return Ok(ctx, Role)
 
 	})
 }
@@ -87,12 +88,13 @@ func DeleteRole(router fiber.Router) {
 		entity.DB().Find(&Role, id)
 		if err := entity.DB().Find(&Role).Error; err != nil {
 			log.Errorf("An error occurred when finding the role to be deleted: %v", err)
-			return api.JSON(ctx, fiber.StatusInternalServerError, i18n.ErrUnexpected, err)
+			return JSONError(ctx, fiber.StatusInternalServerError, i18n.ErrUnexpected, err)
 		}
 		Role.Delete()
-		return ctx.Status(fiber.StatusOK).JSON(fiber.Map{
-			"ID":      id,
-			"Deleted": true,
-		})
+		return JSON(ctx, fiber.StatusOK,
+			struct {
+				Id      string
+				Deleted bool
+			}{id, true}, i18n.MsgOk)
 	})
 }

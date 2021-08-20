@@ -2,6 +2,7 @@ package api
 
 import (
 	"github.com/gofiber/fiber/v2"
+
 	"go.vixal.xyz/esp/internal/i18n"
 
 	"go.vixal.xyz/esp/internal/entity"
@@ -19,7 +20,7 @@ func GetProfile(router fiber.Router) {
 				}
 			}
 		}
-		return JSON(c, fiber.StatusUnauthorized, i18n.ErrUnauthorized, nil)
+		return JSONError(c, fiber.StatusUnauthorized, i18n.ErrUnauthorized, nil)
 	})
 }
 

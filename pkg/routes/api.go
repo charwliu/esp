@@ -3,7 +3,6 @@ package routes
 import (
 	"github.com/gofiber/fiber/v2"
 
-	Controller "go.vixal.xyz/esp/app/controllers/api"
 	"go.vixal.xyz/esp/internal/api"
 )
 
@@ -15,25 +14,25 @@ func RegisterAPI(router fiber.Router) {
 	api.GetStatus(router)
 	api.GetProfile(router)
 	api.GetStats(router)
-	Controller.GetNotices(router)
-	Controller.GetFakeList(router)
+	api.GetNotices(router)
+	api.GetFakeList(router)
 }
 
 func registerGeographic(router fiber.Router) {
 	geo := router.Group("/geographic")
-	Controller.GetProvince(geo)
-	Controller.GetCity(geo)
+	api.GetProvince(geo)
+	api.GetCity(geo)
 }
 
 func registerRoles(router fiber.Router) {
 	roles := router.Group("/roles")
 
-	Controller.GetAllRoles(router)
+	api.GetAllRoles(router)
 
-	Controller.GetRole(roles)
-	Controller.AddRole(roles)
-	Controller.EditRole(roles)
-	Controller.DeleteRole(roles)
+	api.GetRole(roles)
+	api.AddRole(roles)
+	api.EditRole(roles)
+	api.DeleteRole(roles)
 }
 
 func registerUsers(router fiber.Router) {

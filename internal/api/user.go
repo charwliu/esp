@@ -4,6 +4,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 
 	"go.vixal.xyz/esp/internal/entity"
+	"go.vixal.xyz/esp/internal/form"
 	"go.vixal.xyz/esp/internal/i18n"
 	"go.vixal.xyz/esp/internal/service"
 )
@@ -15,7 +16,7 @@ func ChangePassword(router fiber.Router) {
 		config := service.Config()
 
 		if config.Public() || config.DisableSettings() {
-			return i18n.NewResponse(fiber.StatusForbidden, i18n.ErrPublic)
+			return NewResponse(fiber.StatusForbidden, i18n.ErrPublic)
 		}
 
 		return nil
@@ -28,18 +29,12 @@ func GetAllUsers(router fiber.Router) {
 	router.Get("/", func(ctx *fiber.Ctx) error {
 		var users entity.Users
 		if err := entity.DB().Find(&users).Error; err != nil {
-			return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-				"message": "Internal error",
-				"code":    fiber.StatusInternalServerError,
-			})
+			return Unexpected(ctx, err)
 		}
 		if len(users) > 0 {
-			return ctx.Status(fiber.StatusOK).JSON(users)
+			return Success(ctx, users)
 		} else {
-			return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{
-				"message": "User not found",
-				"code":    fiber.StatusNotFound,
-			})
+			return UserNotFound(ctx, nil)
 		}
 	})
 }
@@ -48,14 +43,30 @@ func GetAllUsers(router fiber.Router) {
 // POST /v1/users  Create user
 func CreateUser(router fiber.Router) {
 	router.Post("/", func(ctx *fiber.Ctx) error {
-		user := &entity.User{}
-		if err := ctx.BodyParser(user); err != nil {
-			return JSON(ctx, fiber.StatusInternalServerError, i18n.ErrUnexpected, err)
+		req := &form.User{}
+		if err := ctx.BodyParser(req); err != nil {
+			return Unexpected(ctx, err)
+		}
+		if len(req.Username) == 0 {
+			req.Username = req.Email
+		}
+		user := &entity.User{
+			UserName:    req.Username,
+			Email:       req.Email,
+			PhoneNumber: req.Mobile,
 		}
 		if result, err := entity.FirstOrCreateUser(user); err != nil {
-			return JSON(ctx, fiber.StatusInternalServerError, i18n.ErrUnexpected, err)
+			if result == nil {
+				return Unexpected(ctx, err)
+			} else {
+				return AlreadyExist(ctx, result.UserName)
+			}
 		} else {
-			return ctx.Status(fiber.StatusOK).JSON(result)
+			password := entity.NewPassword(result.UserUID, req.Password)
+			if err = password.Save(); err != nil {
+				return Unexpected(ctx, err)
+			}
+			return Success(ctx, result)
 		}
 
 	})
@@ -65,9 +76,9 @@ func GetUserInfo(router fiber.Router) {
 	router.Get("/:id", func(ctx *fiber.Ctx) error {
 		id := ctx.Params("id")
 		if user, err := entity.FindUserByUID(id); err != nil {
-			return JSON(ctx, fiber.StatusNotFound, i18n.ErrUserNotFound, err)
+			return UserNotFound(ctx, err)
 		} else {
-			return ctx.Status(fiber.StatusOK).JSON(user)
+			return Success(ctx, user)
 		}
 	})
 }
@@ -76,20 +87,20 @@ func EditUser(router fiber.Router) {
 	router.Put("/:id", func(ctx *fiber.Ctx) error {
 		var editUser entity.User
 		if err := ctx.BodyParser(&editUser); err != nil {
-			return JSON(ctx, fiber.StatusInternalServerError, i18n.ErrUnexpected, err)
+			return Unexpected(ctx, err)
 		}
 		id := ctx.Params("id")
 		if user, err := entity.FindUserByUID(id); err != nil {
-			return JSON(ctx, fiber.StatusNotFound, i18n.ErrUserNotFound, err)
+			return UserNotFound(ctx, err)
 		} else {
 			user.UserName = editUser.UserName
 			user.Email = editUser.Email
 			user.Status = editUser.Status
 			user.Avatar = editUser.Avatar
 			if err = user.Save(); err != nil {
-				return JSON(ctx, fiber.StatusInternalServerError, i18n.ErrUnexpected, err)
+				return Unexpected(ctx, err)
 			}
-			return ctx.Status(fiber.StatusOK).JSON(editUser)
+			return Success(ctx, editUser)
 		}
 	})
 }
@@ -98,9 +109,9 @@ func DeleteUser(router fiber.Router) {
 	router.Delete("/:id", func(ctx *fiber.Ctx) error {
 		id := ctx.Params("id")
 		if err := entity.DB().Delete(&entity.User{}, "user_uid = ?", id).Error; err == nil {
-			return ctx.Status(fiber.StatusNoContent).JSON("User " + id + "destroyed")
+			return NoContent(ctx, "User "+id+"destroyed")
 		} else {
-			return JSON(ctx, fiber.StatusNotFound, i18n.ErrUserNotFound, err)
+			return UserNotFound(ctx, err)
 		}
 	})
 }

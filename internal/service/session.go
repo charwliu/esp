@@ -1,20 +1,22 @@
 package service
 
 import (
-	"github.com/gofiber/fiber/v2"
 	"sync"
+
+	"github.com/gofiber/fiber/v2"
 
 	"github.com/gofiber/fiber/v2/middleware/session"
 
 	"go.vixal.xyz/esp/internal/acl"
+	"go.vixal.xyz/esp/internal/entity"
 )
 
 var onceSession sync.Once
 
 func initSession() {
 	services.Store = session.New(Config().SessionConfig())
-	var role acl.Role
-	services.Store.RegisterType(&role)
+	services.Store.RegisterType(new(acl.Role))
+	services.Store.RegisterType([]*entity.Role{})
 }
 
 func Store() *session.Store {

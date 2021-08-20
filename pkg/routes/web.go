@@ -6,7 +6,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	hashing "github.com/thomasvvugt/fiber-hashing"
 
-	. "go.vixal.xyz/esp/app/controllers/api"
+	. "go.vixal.xyz/esp/internal/api"
 )
 
 func RegisterWeb(web fiber.Router, hasher hashing.Driver) {

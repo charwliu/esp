@@ -9,63 +9,95 @@ import (
 
 var log = event.Log.Sugar()
 
-func BadRequest() i18n.Response {
-	return i18n.NewResponse(fiber.StatusBadRequest, i18n.ErrBadRequest)
+func Success(ctx *fiber.Ctx, data interface{}) error {
+	return ctx.Status(fiber.StatusOK).JSON(data)
 }
 
-func EntityNotFound() i18n.Response {
-	return i18n.NewResponse(fiber.StatusNotFound, i18n.ErrNotFound)
-
+func Ok(ctx *fiber.Ctx, data interface{}) error {
+	return ctx.Status(fiber.StatusOK).
+		JSON(NewResponseWithData(fiber.StatusOK, data, i18n.MsgOk))
 }
 
-func UserNotFound() i18n.Response {
-	return i18n.NewResponse(fiber.StatusNotFound, i18n.ErrUserNotFound)
+func Created(ctx *fiber.Ctx, data interface{}) error {
+	return ctx.Status(fiber.StatusCreated).
+		JSON(NewResponseWithData(fiber.StatusCreated, data, i18n.MsgOk))
 }
 
-func Unexpected() i18n.Response {
-	return i18n.NewResponse(fiber.StatusInternalServerError, i18n.ErrUnexpected)
+func NoContent(ctx *fiber.Ctx, data interface{}) error {
+	return ctx.Status(fiber.StatusNoContent).JSON(data)
 }
 
-func Abort(code int, id i18n.Message, params ...interface{}) i18n.Response {
-	return i18n.NewResponse(code, id, params)
+func BadRequest(ctx *fiber.Ctx) error {
+	return ctx.Status(fiber.StatusBadRequest).
+		JSON(NewResponse(fiber.StatusBadRequest, i18n.ErrBadRequest))
 }
 
-func JSON(ctx *fiber.Ctx, code int, id i18n.Message, err error, params ...interface{}) error {
+func NotFound(ctx *fiber.Ctx, err error) error {
+	return ctx.Status(fiber.StatusNotFound).
+		JSON(Error(fiber.StatusNotFound, i18n.ErrNotFound, err))
+}
+
+func UserNotFound(ctx *fiber.Ctx, err error) error {
+	return ctx.Status(fiber.StatusNotFound).
+		JSON(Error(fiber.StatusNotFound, i18n.ErrUserNotFound, err))
+}
+
+func Unexpected(ctx *fiber.Ctx, err error, params ...interface{}) error {
+	var data interface{}
+	if len(params) > 0 {
+		data = params[0]
+	}
+	return ctx.Status(fiber.StatusInternalServerError).
+		JSON(NewResponseWithDataOrError(fiber.StatusInternalServerError, data, err, i18n.ErrUnexpected))
+}
+
+func JSONError(ctx *fiber.Ctx, code int, id i18n.Message, err error, params ...interface{}) error {
 	return ctx.Status(code).JSON(Error(code, id, err, params))
 }
 
-func Error(code int, id i18n.Message, err error, params ...interface{}) i18n.Response {
-	resp := i18n.NewResponse(code, id, params)
+func JSON(ctx *fiber.Ctx, code int, data interface{}, id i18n.Message, params ...interface{}) error {
+	return ctx.Status(code).JSON(NewResponseWithData(code, data, id, params...))
+}
+
+func Error(code int, id i18n.Message, err error, params ...interface{}) Response {
+	resp := NewResponse(code, id, params...)
 	if err != nil {
 		resp.Details = err.Error()
 	}
 	return resp
 }
 
-func Unauthorized() i18n.Response {
-	return Abort(fiber.StatusUnauthorized, i18n.ErrUnauthorized)
+func Unauthorized(ctx *fiber.Ctx, data interface{}, err error) error {
+	return ctx.Status(fiber.StatusUnauthorized).
+		JSON(NewResponseWithDataOrError(fiber.StatusUnauthorized, data, err, i18n.ErrUnauthorized))
 }
 
-func SaveFailed() i18n.Response {
-	return i18n.NewResponse(fiber.StatusInternalServerError, i18n.ErrSaveFailed)
+func SaveFailed(ctx *fiber.Ctx) error {
+	return ctx.Status(fiber.StatusInternalServerError).
+		JSON(NewResponse(fiber.StatusInternalServerError, i18n.ErrSaveFailed))
 }
 
-func DeleteFailed() i18n.Response {
-	return i18n.NewResponse(fiber.StatusInternalServerError, i18n.ErrDeleteFailed)
+func DeleteFailed(ctx *fiber.Ctx) error {
+	return ctx.Status(fiber.StatusInternalServerError).
+		JSON(NewResponse(fiber.StatusInternalServerError, i18n.ErrDeleteFailed))
 }
 
-func AlreadyExist(s string) i18n.Response {
-	return i18n.NewResponse(fiber.StatusConflict, i18n.ErrAlreadyExists, s)
+func AlreadyExist(ctx *fiber.Ctx, s string) error {
+	return ctx.Status(fiber.StatusConflict).
+		JSON(NewResponse(fiber.StatusConflict, i18n.ErrAlreadyExists, s))
 }
 
-func FeatureDisabled() i18n.Response {
-	return i18n.NewResponse(fiber.StatusForbidden, i18n.ErrFeatureDisabled)
+func FeatureDisabled(ctx *fiber.Ctx) error {
+	return ctx.Status(fiber.StatusForbidden).
+		JSON(NewResponse(fiber.StatusForbidden, i18n.ErrFeatureDisabled))
 }
 
-func InvalidCredentials() i18n.Response {
-	return i18n.NewResponse(fiber.StatusBadRequest, i18n.ErrInvalidCredentials)
+func InvalidCredentials(ctx *fiber.Ctx, err error) error {
+	return ctx.Status(fiber.StatusBadRequest).
+		JSON(Error(fiber.StatusBadRequest, i18n.ErrInvalidCredentials, err))
 }
 
-func InvalidPassword() i18n.Response {
-	return i18n.NewResponse(fiber.StatusBadRequest, i18n.ErrInvalidPassword)
+func InvalidPassword(ctx *fiber.Ctx, err error) error {
+	return ctx.Status(fiber.StatusBadRequest).
+		JSON(Error(fiber.StatusBadRequest, i18n.ErrInvalidPassword, err))
 }

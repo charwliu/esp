@@ -1,15 +1,15 @@
 {
   "/umi.css": "/umi.e291b9bc.css",
-  "/umi.js": "/umi.fe2fbe7e.js",
+  "/umi.js": "/umi.a272ece3.js",
   "/t__plugin-setting-drawer__SettingDrawer.js": "/t__plugin-setting-drawer__SettingDrawer.99993357.async.js",
   "/t__plugin-layout__Layout.css": "/t__plugin-layout__Layout.0e8e1d67.chunk.css",
   "/t__plugin-layout__Layout.js": "/t__plugin-layout__Layout.c444606f.async.js",
   "/p__User__Login.css": "/p__User__Login.69f20bb7.chunk.css",
-  "/p__User__Login.js": "/p__User__Login.eb41ac46.async.js",
+  "/p__User__Login.js": "/p__User__Login.2808d07e.async.js",
   "/p__user__register-result.css": "/p__user__register-result.34ba54c3.chunk.css",
   "/p__user__register-result.js": "/p__user__register-result.be7caf6d.async.js",
   "/p__user__register.css": "/p__user__register.d58302e8.chunk.css",
-  "/p__user__register.js": "/p__user__register.8313fdb7.async.js",
+  "/p__user__register.js": "/p__user__register.b686fd8f.async.js",
   "/p__404.css": "/p__404.b88066b1.chunk.css",
   "/p__404.js": "/p__404.d73f1300.async.js",
   "/p__dashboard__analysis.css": "/p__dashboard__analysis.8f263e53.chunk.css",
@@ -81,5 +81,6 @@
   "/favicon.ico": "/favicon.ico",
   "/icons/icon-192x192.png": "/icons/icon-192x192.png",
   "/icons/icon-128x128.png": "/icons/icon-128x128.png",
-  "/pro_icon.svg": "/pro_icon.svg"
+  "/pro_icon.svg": "/pro_icon.svg",
+  "/.DS_Store": "/.DS_Store"
 }

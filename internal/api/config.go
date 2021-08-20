@@ -9,17 +9,17 @@ import (
 
 // GetConfig
 // GET /api/v1/config
-func GetConfig(router fiber.Router)  {
+func GetConfig(router fiber.Router) {
 	router.Get("/config", func(ctx *fiber.Ctx) error {
 		sess := Session(ctx)
 		if sess == nil {
-			return Unauthorized()
+			return Unauthorized(ctx, nil, nil)
 		}
 		if err := Auth(sess, acl.ResourceConfig, acl.ActionRead); err != nil {
 			return err
 		}
 
 		conf := service.Config()
-		return ctx.Status(fiber.StatusOK).JSON(conf.UserConfig())
+		return Ok(ctx, conf.UserConfig())
 	})
 }

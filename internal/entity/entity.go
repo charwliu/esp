@@ -21,17 +21,17 @@ type Types map[string]interface{}
 
 // Entities List of database entities and their table names.
 var Entities = Types{
-	"error":                     &Error{},
-	"user":                      &User{},
-	"password":                  &Password{},
-	"dept":                      &Dept{},
-	"address":                   &Address{},
-	"menu":                      &Menu{},
-	//"organization":              &Organization{},
-	//"oauth_client":              &OauthClient{},
-	//"user_registration_profile": &UserRegistrationProfile{},
-	//"auth_token":                &AuthToken{},
-	//"pep_proxy":                 &PepProxy{},
+	"error":    &Error{},
+	"user":     &User{},
+	"password": &Password{},
+	"dept":     &Dept{},
+	"address":  &Address{},
+	"menu":     &Menu{},
+	// "organization":              &Organization{},
+	// "oauth_client":              &OauthClient{},
+	// "user_registration_profile": &UserRegistrationProfile{},
+	// "auth_token":                &AuthToken{},
+	// "pep_proxy":                 &PepProxy{},
 
 }
 
@@ -103,11 +103,11 @@ func CreateDefaultFixtures() {
 	CreateUnknownDept()
 	CreateDefaultUsers()
 
-	//CreateUnknownPlace()
-	//CreateUnknownLocation()
-	//CreateUnknownCountry()
-	//CreateUnknownCamera()
-	//CreateUnknownLens()
+	// CreateUnknownPlace()
+	// CreateUnknownLocation()
+	// CreateUnknownCountry()
+	// CreateUnknownCamera()
+	// CreateUnknownLens()
 }
 
 // MigrateDb creates all tables and inserts default entities as needed.

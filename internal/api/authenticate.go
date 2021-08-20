@@ -4,21 +4,20 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-func CreateToken(router fiber.Router)  {
+func CreateToken(router fiber.Router) {
 	router.Post("/", func(ctx *fiber.Ctx) error {
-		return nil
+		return Ok(ctx, "ok")
 	})
 }
 
-func InfoToken(router fiber.Router)  {
+func InfoToken(router fiber.Router) {
 	router.Get("/", func(ctx *fiber.Ctx) error {
-		ctx.Status(fiber.StatusCreated).JSON("ok")
-		return nil
+		return Created(ctx, "ok")
 	})
 }
 
-func DeleteToken(router fiber.Router)  {
+func DeleteToken(router fiber.Router) {
 	router.Delete("/", func(ctx *fiber.Ctx) error {
-		return nil
+		return Ok(ctx, "ok")
 	})
 }

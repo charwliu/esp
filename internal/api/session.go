@@ -1,16 +1,19 @@
 package api
 
 import (
+	"errors"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/session"
 
 	"go.vixal.xyz/esp/internal/acl"
+	"go.vixal.xyz/esp/internal/i18n"
 	"go.vixal.xyz/esp/internal/service"
 )
 
 // Session returns the current session data.
 func Session(c *fiber.Ctx) *session.Session {
-	sess, err := service.Store().Get(c)
+	sess, err := service.Session(c)
 	if err != nil {
 		return nil
 	}
@@ -22,7 +25,7 @@ func Session(c *fiber.Ctx) *session.Session {
 func Auth(sess *session.Session, resource acl.Resource, action acl.Action) error {
 	role, ok := sess.Get("Role").(acl.Role)
 	if ok && acl.Permissions.Deny(resource, role, action) {
-		return Unauthorized()
+		return errors.New(i18n.Msg(i18n.ErrUnauthorized))
 	}
 	return nil
 }

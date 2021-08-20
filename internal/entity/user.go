@@ -7,6 +7,7 @@ import (
 
 	"gorm.io/gorm"
 
+	"go.vixal.xyz/esp/internal/i18n"
 	"go.vixal.xyz/esp/pkg/rnd"
 	"go.vixal.xyz/esp/pkg/txt"
 )
@@ -27,14 +28,14 @@ type User struct {
 	Gender        int16          `gorm:"size:1" json:"gender,omitempty"`                  // 用户性别（0男 1女 2未知）
 	Status        int16          `gorm:"size:1;default:0" json:"status,omitempty"`        // 帐号状态（0正常 1停用）
 	LoginIP       string         `gorm:"size:50;default:''" json:"loginIp,omitempty"`     // 最后登陆IP
-	LoginAt       time.Time      `json:"loginAt,omitempty"`                               // 最后登陆时间
+	LoginAt       time.Time      `json:"-"`                                               // 最后登陆时间
 	Remark        string         `gorm:"size:500" json:"remark,omitempty"`                // 备注
 	OpenID        string         `gorm:"size:100" json:"openId,omitempty"`                // 微信OpenId
 	NickName      string         `gorm:"size:100" json:"nickName,omitempty"`              // 昵称
 	Name          string         `gorm:"size:100" json:"name,omitempty"`                  // 昵称
 	WxAvatar      string         `gorm:"size:200" json:"wxAvatar,omitempty"`              // 微信头像
 	LoginAttempts int16          `json:"-" yaml:"-"`
-	Roles         []Role         `gorm:"constraint:OnUpdate:CASCADE,OnDelete:SET NULL;many2many:user_role;" json:"roles"`
+	Roles         []*Role        `gorm:"constraint:OnUpdate:CASCADE,OnDelete:SET NULL;many2many:user_role;" json:"roles,omitempty"`
 	Address       *Address       `gorm:"association_autoupdate:false;association_autocreate:false;association_save_reference:false;PRELOAD:true;" json:"address,omitempty" yaml:"Address,omitempty"`
 	AddressID     int            `gorm:"default:1" json:"-" yaml:"-"`
 	CreatedBy     string         `gorm:"size:64;default:''" json:"-"` // 创建者
@@ -42,7 +43,7 @@ type User struct {
 	CreatedAt     time.Time      `json:"-"`                           // 创建时间
 	UpdatedAt     time.Time      `json:"-"`                           // 更新时间
 	DeletedAt     gorm.DeletedAt `gorm:"index" json:"-"`              // 删除时间
-	Dept          *Dept          `json:"dept"`
+	Dept          *Dept          `json:"dept,omitempty"`
 }
 
 // TableName get sql table name.
@@ -63,7 +64,7 @@ var Admin = User{
 
 // CreateDefaultUsers initializes the database with default user accounts.
 func CreateDefaultUsers() {
-	if user, err := FirstOrCreateUser(&Admin); err == nil {
+	if user, err := FirstOrCreateUser(&Admin); user != nil || err == nil {
 		Admin = *user
 	}
 }
@@ -99,7 +100,7 @@ func FirstOrCreateUser(m *User) (*User, error) {
 	if err = DB().Preload("Address").
 		Where("id = ? OR user_uid = ? OR user_name = ?", m.ID, m.UserUID, m.UserName).
 		First(&result).Error; err == nil {
-		return &result, nil
+		return &result, errors.New(i18n.Msg(i18n.ErrAlreadyExists, result.UserName))
 	} else if err = m.Create(); err != nil {
 		log.Errorf("user: %s, %s", m.UserUID, err)
 		return nil, err

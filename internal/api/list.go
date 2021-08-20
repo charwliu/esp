@@ -1,21 +1,23 @@
 package api
 
 import (
-	"github.com/gofiber/fiber/v2"
-	"go.vixal.xyz/esp/pkg/uniuri"
 	"math"
 	"math/rand"
 	"strconv"
 	"time"
+
+	"github.com/gofiber/fiber/v2"
+
+	"go.vixal.xyz/esp/pkg/uniuri"
 )
 
 type Status string
 
 const (
-	Normal    Status = "normal"
-	Exception Status = "exception"
-	Active    Status = "active"
-	Success   Status = "success"
+	StNormal    Status = "normal"
+	StException Status = "exception"
+	StActive    Status = "active"
+	StSuccess   Status = "success"
 )
 
 type Member struct {
@@ -48,7 +50,7 @@ type ListItemDataType struct {
 	Members        []Member    `json:"members"`
 }
 
-var users = []string{
+var _users = []string{
 	"付小小",
 	"曲丽丽",
 	"林东东",
@@ -103,11 +105,11 @@ func fakeList(count int) []ListItemDataType {
 	for i := 0; i < count; i++ {
 		list = append(list, ListItemDataType{
 			Id:             "fake-list-" + uniuri.NewLen(4) + strconv.Itoa(i),
-			Owner:          users[i%len(users)],
+			Owner:          _users[i%len(_users)],
 			Title:          titles[i%len(titles)],
 			Avatar:         avatars[i%len(avatars)],
 			Cover:          covers[i%len(covers)],
-			Status:         []Status{Active, Exception, Normal}[i%3],
+			Status:         []Status{StActive, StException, StNormal}[i%3],
 			Percent:        int(math.Ceil(rand.Float64()*50) + 50),
 			Logo:           avatars[i%len(avatars)],
 			Href:           "http://esp.vixal.xyz",

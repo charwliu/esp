@@ -1,7 +1,8 @@
 package i18n
 
 const (
-	ErrUnexpected Message = iota + 1
+	MsgOk Message = iota
+	ErrUnexpected
 	ErrBadRequest
 	ErrSaveFailed
 	ErrDeleteFailed
@@ -71,6 +72,7 @@ const (
 
 var Messages = MessageMap{
 	// Error messages:
+	MsgOk:                 gettext("ok"),
 	ErrUnexpected:         gettext("Unexpected error, please try again"),
 	ErrBadRequest:         gettext("Invalid request"),
 	ErrSaveFailed:         gettext("Changes could not be saved"),
