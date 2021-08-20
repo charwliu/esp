@@ -3,3 +3,6 @@
 /frontend/dist
 /build
 /go.sum
+/openapi/yarn.lock
+/.env
+/config.yml
