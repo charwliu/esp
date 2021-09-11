@@ -22,23 +22,23 @@ func SharedHub() *Hub {
 }
 
 func Error(msg string) {
-	Log.Error(msg)
+	S().Error(msg)
 	Publish("notify.error", Data{"message": msg})
 }
 
 func Success(msg string) {
-	Log.Info(msg)
+	S().Info(msg)
 	Publish("notify.success", Data{"message": msg})
 }
 
 func Info(msg string) {
-	Log.Info(msg)
+	S().Info(msg)
 	Publish("notify.info", Data{"message": msg})
 }
 
 
 func Warning(msg string) {
-	Log.Warn(msg)
+	S().Warn(msg)
 	Publish("notify.warning", Data{"message": msg})
 }
 

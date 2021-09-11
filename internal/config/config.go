@@ -28,6 +28,7 @@ import (
 	"github.com/gofiber/template/pug"
 	"github.com/jameskeane/bcrypt"
 	"github.com/klauspost/cpuid/v2"
+	"go.uber.org/zap"
 
 	"github.com/alexedwards/argon2id"
 	hashing "github.com/thomasvvugt/fiber-hashing"
@@ -45,10 +46,15 @@ import (
 	"go.vixal.xyz/esp/pkg/fs"
 	"go.vixal.xyz/esp/pkg/rnd"
 	"go.vixal.xyz/esp/pkg/storage/postgres"
-	"go.vixal.xyz/esp/pkg/txt"
 )
 
-var log = event.Log.Sugar()
+func S() *zap.SugaredLogger {
+	return event.S()
+}
+
+func L() *zap.Logger {
+	return event.L()
+}
 
 var once sync.Once
 
@@ -57,53 +63,16 @@ const StaticUri = "/static"
 
 // Config holds database, cache and all parameters of esp
 type Config struct {
-	once         sync.Once
 	db           *gorm.DB
 	options      *Options
 	settings     *Settings
 	fiber        *fiber.Config
 	token        string
 	serial       string
-	logger       *LoggerConfig
+	loggerConfig *LoggerConfig
+	logger       *zap.Logger
+	LoggerClose  func()
 	errorHandler fiber.ErrorHandler
-}
-
-type LoggerConfig struct {
-	// Type determines whether zap will be initialized as a file logger or,
-	// by default, as a console logger.
-	Type string `json:"type"`
-
-	// Environment determines whether zap will be initialized using a production
-	// or a development logger.
-	Environment string `json:"environment"`
-
-	// Filename is the file to write logs to.  Backup log files will be retained
-	// in the same directory.
-	Filename string `json:"filename"`
-
-	// MaxSize is the maximum size in megabytes of the log file before it gets
-	// rotated.
-	MaxSize int `json:"max_size"`
-
-	// MaxAge is the maximum number of days to retain old log files based on the
-	// timestamp encoded in their filename.  Note that a day is defined as 24
-	// hours and may not exactly correspond to calendar days due to daylight
-	// savings, leap seconds, etc. The default is not to remove old log files
-	// based on age.
-	MaxAge int `json:"max_age"`
-
-	// MaxBackups is the maximum number of old log files to retain.
-	MaxBackups int `json:"max_backups"`
-
-	// LocalTime determines if the time used for formatting the timestamps in
-	// backup files is the computer's local time.
-	LocalTime bool `json:"local_time"`
-
-	// Compress determines if the rotated log files should be compressed
-	// using gzip.
-	Compress bool `json:"compress"`
-
-	Verbose bool `json:"verbose"`
 }
 
 //
@@ -149,169 +118,6 @@ type LoggerConfig struct {
 
 func (c *Config) SetErrorHandler(errorHandler fiber.ErrorHandler) {
 	c.errorHandler = errorHandler
-}
-
-func (c *Config) setDefaults() {
-	//// Set default App configuration
-	//c.SetDefault("APP_ADDR", ":8080")
-	//c.SetDefault("APP_ENV", "local")
-	//execPath, err := os.Executable()
-	//if err != nil {
-	//	panic(err)
-	//}
-	//workDir := filepath.Dir(execPath)
-	//if workDir, err := filepath.EvalSymlinks(workDir); err == nil {
-	//	c.SetDefault("APP_WORKDIR", workDir)
-	//} else {
-	//	c.SetDefault("APP_WORKDIR", "./")
-	//}
-	//
-	//// Set default database configuration
-	//c.SetDefault("DB_DRIVER", "mysql")
-	//c.SetDefault("DB_HOST", "localhost")
-	//c.SetDefault("DB_USERNAME", "esp")
-	//c.SetDefault("DB_PASSWORD", "password")
-	//c.SetDefault("DB_PORT", 3306)
-	//c.SetDefault("DB_DATABASE", "esp")
-	//
-	//// Set default hasher configuration
-	//c.SetDefault("HASHER_DRIVER", "argon2id")
-	//c.SetDefault("HASHER_MEMORY", 131072)
-	//c.SetDefault("HASHER_ITERATIONS", 4)
-	//c.SetDefault("HASHER_PARALLELISM", 4)
-	//c.SetDefault("HASHER_SALTLENGTH", 16)
-	//c.SetDefault("HASHER_KEYLENGTH", 32)
-	//c.SetDefault("HASHER_ROUNDS", bcrypt.DefaultRounds)
-	//
-	//// Set default session configuration
-	//c.SetDefault("SESSION_PROVIDER", "mysql")
-	//c.SetDefault("SESSION_KEYPREFIX", "session")
-	//c.SetDefault("SESSION_HOST", "localhost")
-	//c.SetDefault("SESSION_PORT", 3306)
-	//c.SetDefault("SESSION_USERNAME", "fiber")
-	//c.SetDefault("SESSION_PASSWORD", "secret")
-	//c.SetDefault("SESSION_DATABASE", "esp")
-	//c.SetDefault("SESSION_TABLENAME", "sessions")
-	//c.SetDefault("SESSION_LOOKUP", "cookie:session_id")
-	//c.SetDefault("SESSION_DOMAIN", "")
-	//c.SetDefault("SESSION_SAMESITE", "Lax")
-	//c.SetDefault("SESSION_EXPIRATION", "12h")
-	//c.SetDefault("SESSION_SECURE", false)
-	//c.SetDefault("SESSION_GCINTERVAL", "1m")
-	//
-	//// Set default Fiber configuration
-	//c.SetDefault("FIBER_PREFORK", false)
-	//c.SetDefault("FIBER_SERVERHEADER", "")
-	//c.SetDefault("FIBER_STRICTROUTING", false)
-	//c.SetDefault("FIBER_CASESENSITIVE", false)
-	//c.SetDefault("FIBER_IMMUTABLE", false)
-	//c.SetDefault("FIBER_UNESCAPEPATH", false)
-	//c.SetDefault("FIBER_ETAG", false)
-	//c.SetDefault("FIBER_BODYLIMIT", 4194304)
-	//c.SetDefault("FIBER_CONCURRENCY", 262144)
-	//c.SetDefault("FIBER_VIEWS", "html")
-	//c.SetDefault("FIBER_VIEWS_DIRECTORY", "resources/views")
-	//c.SetDefault("FIBER_VIEWS_RELOAD", false)
-	//c.SetDefault("FIBER_VIEWS_DEBUG", false)
-	//c.SetDefault("FIBER_VIEWS_LAYOUT", "embed")
-	//c.SetDefault("FIBER_VIEWS_DELIMS_L", "{{")
-	//c.SetDefault("FIBER_VIEWS_DELIMS_R", "}}")
-	//c.SetDefault("FIBER_READTIMEOUT", 0)
-	//c.SetDefault("FIBER_WRITETIMEOUT", 0)
-	//c.SetDefault("FIBER_IDLETIMEOUT", 0)
-	//c.SetDefault("FIBER_READBUFFERSIZE", 4096)
-	//c.SetDefault("FIBER_WRITEBUFFERSIZE", 4096)
-	//c.SetDefault("FIBER_COMPRESSEDFILESUFFIX", ".fiber.gz")
-	//c.SetDefault("FIBER_PROXYHEADER", "")
-	//c.SetDefault("FIBER_GETONLY", false)
-	//c.SetDefault("FIBER_DISABLEKEEPALIVE", false)
-	//c.SetDefault("FIBER_DISABLEDEFAULTDATE", false)
-	//c.SetDefault("FIBER_DISABLEDEFAULTCONTENTTYPE", false)
-	//c.SetDefault("FIBER_DISABLEHEADERNORMALIZING", false)
-	//c.SetDefault("FIBER_DISABLESTARTUPMESSAGE", false)
-	//c.SetDefault("FIBER_REDUCEMEMORYUSAGE", false)
-	//
-	//// Set default Custom Access Logger middleware configuration
-	//c.SetDefault("MW_ACCESS_LOGGER_ENABLED", true)
-	//c.SetDefault("MW_ACCESS_LOGGER_TYPE", "console")
-	//c.SetDefault("MW_ACCESS_LOGGER_FILENAME", "access.log")
-	//c.SetDefault("MW_ACCESS_LOGGER_MAXSIZE", 500)
-	//c.SetDefault("MW_ACCESS_LOGGER_MAXAGE", 28)
-	//c.SetDefault("MW_ACCESS_LOGGER_MAXBACKUPS", 3)
-	//c.SetDefault("MW_ACCESS_LOGGER_LOCALTIME", false)
-	//c.SetDefault("MW_ACCESS_LOGGER_COMPRESS", false)
-	//
-	//// Set default Force HTTPS middleware configuration
-	//c.SetDefault("MW_FORCE_HTTPS_ENABLED", false)
-	//
-	//// Set default Force trailing slash middleware configuration
-	//c.SetDefault("MW_FORCE_TRAILING_SLASH_ENABLED", false)
-	//
-	//// Set default HSTS middleware configuration
-	//c.SetDefault("MW_HSTS_ENABLED", false)
-	//c.SetDefault("MW_HSTS_MAXAGE", 31536000)
-	//c.SetDefault("MW_HSTS_INCLUDESUBDOMAINS", true)
-	//c.SetDefault("MW_HSTS_PRELOAD", false)
-	//
-	//// Set default Suppress WWW middleware configuration
-	//c.SetDefault("MW_SUPPRESS_WWW_ENABLED", true)
-	//
-	//// Set default Fiber Cache middleware configuration
-	//c.SetDefault("MW_FIBER_CACHE_ENABLED", false)
-	//c.SetDefault("MW_FIBER_CACHE_EXPIRATION", "1m")
-	//c.SetDefault("MW_FIBER_CACHE_CACHECONTROL", false)
-	//
-	//// Set default Fiber Compress middleware configuration
-	//c.SetDefault("MW_FIBER_COMPRESS_ENABLED", false)
-	//c.SetDefault("MW_FIBER_COMPRESS_LEVEL", 0)
-	//
-	//// Set default Fiber CORS middleware configuration
-	//c.SetDefault("MW_FIBER_CORS_ENABLED", false)
-	//c.SetDefault("MW_FIBER_CORS_ALLOWORIGINS", "*")
-	//c.SetDefault("MW_FIBER_CORS_ALLOWMETHODS", "GET,POST,HEAD,PUT,DELETE,PATCH")
-	//c.SetDefault("MW_FIBER_CORS_ALLOWHEADERS", "")
-	//c.SetDefault("MW_FIBER_CORS_ALLOWCREDENTIALS", false)
-	//c.SetDefault("MW_FIBER_CORS_EXPOSEHEADERS", "")
-	//c.SetDefault("MW_FIBER_CORS_MAXAGE", 0)
-	//
-	//// Set default Fiber CSRF middleware configuration
-	//c.SetDefault("MW_FIBER_CSRF_ENABLED", false)
-	//c.SetDefault("MW_FIBER_CSRF_KEYLOOKUP", "header:X-CSRF-Token")
-	//c.SetDefault("MW_FIBER_CSRF_COOKIE_NAME", "_csrf")
-	//c.SetDefault("MW_FIBER_CSRF_COOKIE_SAMESITE", "Strict")
-	//c.SetDefault("MW_FIBER_CSRF_COOKIE_EXPIRES", "24h")
-	//c.SetDefault("MW_FIBER_CSRF_CONTEXTKEY", "csrf")
-	//
-	//// Set default Fiber ETag middleware configuration
-	//c.SetDefault("MW_FIBER_ETAG_ENABLED", false)
-	//c.SetDefault("MW_FIBER_ETAG_WEAK", false)
-	//
-	//// Set default Fiber Expvar middleware configuration
-	//c.SetDefault("MW_FIBER_EXPVAR_ENABLED", false)
-	//
-	//// Set default Fiber Favicon middleware configuration
-	//c.SetDefault("MW_FIBER_FAVICON_ENABLED", false)
-	//c.SetDefault("MW_FIBER_FAVICON_FILE", "")
-	//c.SetDefault("MW_FIBER_FAVICON_CACHECONTROL", "public, max-age=31536000")
-	//
-	//// Set default Fiber Limiter middleware configuration
-	//c.SetDefault("MW_FIBER_LIMITER_ENABLED", false)
-	//c.SetDefault("MW_FIBER_LIMITER_MAX", 5)
-	//c.SetDefault("MW_FIBER_LIMITER_EXPIRATION", "1m")
-	//
-	//// Set default Fiber Monitor middleware configuration
-	//c.SetDefault("MW_FIBER_MONITOR_ENABLED", false)
-	//
-	//// Set default Fiber Pprof middleware configuration
-	//c.SetDefault("MW_FIBER_PPROF_ENABLED", false)
-	//
-	//// Set default Fiber Recover middleware configuration
-	//c.SetDefault("MW_FIBER_RECOVER_ENABLED", true)
-	//
-	//// Set default Fiber RequestID middleware configuration
-	//c.SetDefault("MW_FIBER_REQUESTID_ENABLED", false)
-	//c.SetDefault("MW_FIBER_REQUESTID_HEADER", "X-Request-ID")
-	//c.SetDefault("MW_FIBER_REQUESTID_CONTEXTKEY", "requestid")
 }
 
 func (c *Config) getFiberViewsEngine() fiber.Views {
@@ -421,34 +227,6 @@ func (c *Config) getFiberViewsEngine() fiber.Views {
 }
 
 func (c *Config) FiberConfig() *fiber.Config {
-	if c.options.FiberConfig == nil {
-		c.options.FiberConfig = &FiberConfig{
-			Prefork:                   false,
-			ServerHeader:              "",
-			StrictRouting:             false,
-			CaseSensitive:             false,
-			Immutable:                 false,
-			UnescapePath:              false,
-			ETag:                      false,
-			BodyLimit:                 4194303,
-			Concurrency:               262144,
-			ReadTimeout:               0,
-			WriteTimeout:              0,
-			IdleTimeout:               0,
-			ReadBufferSize:            4096,
-			WriteBufferSize:           4096,
-			CompressedFileSuffix:      ".fiber.gz",
-			ProxyHeader:               "",
-			GETOnly:                   false,
-			DisableKeepalive:          false,
-			DisableDefaultDate:        false,
-			DisableDefaultContentType: false,
-			DisableHeaderNormalizing:  false,
-			DisableStartupMessage:     false,
-			ReduceMemoryUsage:         false,
-			MiddleWare:                &MiddleWare{},
-		}
-	}
 	cfg := c.options.FiberConfig
 	c.fiber = &fiber.Config{
 		Prefork:                   cfg.Prefork,
@@ -485,23 +263,19 @@ func (c *Config) FiberConfig() *fiber.Config {
 	return c.fiber
 }
 
-//func (config *Config) setLoggerConfig() {
-//	config.logger = &LoggerConfig{
-//		ClientType:        config.GetString("LOG_TYPE"),
-//		Environment: config.GetString("LOG_ENV"),
-//		Filename:    config.GetString("LOG_FILENAME"),
-//		MaxSize:     config.GetInt("LOG_MAXSIZE"),
-//		MaxAge:      config.GetInt("LOG_MAXAGE"),
-//		MaxBackups:  config.GetInt("LOG_MAXBACKUPS"),
-//		LocalTime:   config.GetBool("LOG_LOCALTIME"),
-//		Compress:    config.GetBool("LOG_COMPRESS"),
-//		Verbose:     config.GetBool("LOG_VERBOSE"),
-//	}
-//}
-
-func (c *Config) LoggerConfig() *LoggerConfig {
-	return c.logger
-}
+// func (config *Config) setLoggerConfig() {
+// 	config.loggerConfig = &LoggerConfig{
+// 		ClientType:        config.GetString("LOG_TYPE"),
+// 		Environment: config.GetString("LOG_ENV"),
+// 		Filename:    config.GetString("LOG_FILENAME"),
+// 		MaxSize:     config.GetInt("LOG_MAXSIZE"),
+// 		MaxAge:      config.GetInt("LOG_MAXAGE"),
+// 		MaxBackups:  config.GetInt("LOG_MAXBACKUPS"),
+// 		LocalTime:   config.GetBool("LOG_LOCALTIME"),
+// 		Compress:    config.GetBool("LOG_COMPRESS"),
+// 		Verbose:     config.GetBool("LOG_VERBOSE"),
+// 	}
+// }
 
 func (c *Config) HasherConfig() hashing.Config {
 	driver := c.HasherDriver()
@@ -597,19 +371,19 @@ func initLogger(debug bool) {
 
 // NewConfig initialises a new configuration file
 func NewConfig(ctx *cli.Context) *Config {
-	initLogger(ctx.Bool("debug"))
-
 	c := &Config{
 		options:      NewOptions(ctx),
 		token:        rnd.Token(8),
+		loggerConfig: NewLoggerConfig(ctx.Bool("debug")),
 		errorHandler: defaultErrorHandler,
 	}
+	c.logger, c.LoggerClose = NewLogger(".", c.loggerConfig)
 
 	if configFile := c.ConfigFile(); c.options.ConfigFile == "" && fs.FileExists(configFile) {
 		if err := c.options.Load(configFile); err != nil {
-			log.Warnf("config: %s", err)
+			L().Warn("config:", zap.Error(err))
 		} else {
-			log.Debugf("config: options loaded from %s", txt.Quote(configFile))
+			L().Debug("config: options loaded from", zap.String("filename", configFile))
 		}
 	}
 
@@ -619,7 +393,7 @@ func NewConfig(ctx *cli.Context) *Config {
 // Options returns the raw config options.
 func (c *Config) Options() *Options {
 	if c.options == nil {
-		log.Warnf("config: options should not be nil - bug?")
+		L().Warn("config: options should not be nil - bug?")
 		c.options = NewOptions(nil)
 	}
 
@@ -628,10 +402,10 @@ func (c *Config) Options() *Options {
 
 // Propagate updates config options in other packages as needed.
 func (c *Config) Propagate() {
-	//log.SetLevel(c.LogLevel())
+	// log.SetLevel(c.LogLevel())
 	//
-	//places.UserAgent = c.UserAgent()
-	//entity.GeoApi = c.GeoApi()
+	// places.UserAgent = c.UserAgent()
+	// entity.GeoApi = c.GeoApi()
 
 	c.Settings().Propagate()
 }
@@ -650,12 +424,12 @@ func (c *Config) Init() error {
 	if insensitive, err := c.CaseInsensitive(); err != nil {
 		return err
 	} else if insensitive {
-		log.Infof("config: case-insensitive file system detected")
+		L().Info("config: case-insensitive file system detected")
 		fs.IgnoreCase()
 	}
 
 	if cpuName := cpuid.CPU.BrandName; cpuName != "" {
-		log.Debugf("config: running on %s", txt.Quote(cpuid.CPU.BrandName))
+		L().Debug("config: running on", zap.String("brandName", cpuid.CPU.BrandName))
 	}
 
 	c.initSettings()
@@ -692,7 +466,7 @@ func (c *Config) initStorage() error {
 // Serial returns the random storage serial.
 func (c *Config) Serial() string {
 	if err := c.initStorage(); err != nil {
-		log.Errorf("config: %s", err)
+		L().Error("config: ", zap.Error(err))
 	}
 
 	return c.serial
@@ -705,7 +479,7 @@ func (c *Config) SerialChecksum() string {
 	hash := crc32.New(crc32.MakeTable(crc32.Castagnoli))
 
 	if _, err := hash.Write([]byte(c.Serial())); err != nil {
-		log.Warnf("config: %s", err)
+		L().Warn("config: ", zap.Error(err))
 	}
 
 	return hex.EncodeToString(hash.Sum(result))
@@ -876,9 +650,9 @@ func (c *Config) Shutdown() {
 	mutex.MetaWorker.Cancel()
 
 	if err := c.CloseDB(); err != nil {
-		log.Errorf("could not close database connection: %s", err)
+		L().Error("could not close database connection:", zap.Error(err))
 	} else {
-		log.Info("closed database connection")
+		L().Info("closed database connection")
 	}
 }
 
@@ -950,23 +724,6 @@ func (c *Config) GeoApi() string {
 	}
 
 	return "places"
-}
-
-func (c *Config) AccessLogger() *AccessLoggerConfig {
-	if c.options.AccessLoggerConfig == nil {
-		c.options.AccessLoggerConfig = &AccessLoggerConfig{
-			Enabled:     true,
-			Type:        "console",
-			Environment: "",
-			Filename:    "access.log",
-			MaxSize:     500,
-			MaxAge:      28,
-			MaxBackups:  3,
-			LocalTime:   false,
-			Compress:    false,
-		}
-	}
-	return c.options.AccessLoggerConfig
 }
 
 func (c *Config) Session() *SessionConfig {
@@ -1172,8 +929,8 @@ var defaultErrorHandler = func(c *fiber.Ctx, err error) error {
 
 	// Set error message
 	message := err.Error()
-	//
-	//// Check if it's a fiber.Error type
+
+	// Check if it's a fiber.Error type
 	if e, ok := err.(*fiber.Error); ok {
 		code = e.Code
 		message = e.Message
@@ -1184,9 +941,9 @@ var defaultErrorHandler = func(c *fiber.Ctx, err error) error {
 	return c.Status(code).JSON(fiber.Map{"message": message})
 
 	// Render default error view
-	//err = c.Render("errors/"+strconv.Itoa(code), fiber.Map{"message": message})
-	//if err != nil {
-	//	return c.SendString(message)
-	//}
-	//return err
+	// err = c.Render("errors/"+strconv.Itoa(code), fiber.Map{"message": message})
+	// if err != nil {
+	// 	return c.SendString(message)
+	// }
+	// return err
 }

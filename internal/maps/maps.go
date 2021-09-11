@@ -32,10 +32,18 @@ https://docs.photoprism.org/developer-guide/
 package maps
 
 import (
+	"go.uber.org/zap"
+
 	"go.vixal.xyz/esp/internal/event"
 )
 
 //go:generate go run gen.go
 //go:generate go fmt .
 
-var log = event.Log
+func S() *zap.SugaredLogger  {
+	return event.S()
+}
+
+func L() *zap.Logger  {
+	return event.L()
+}

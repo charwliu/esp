@@ -7,7 +7,9 @@ import (
 	"reflect"
 	"time"
 
+	"github.com/gofiber/fiber/v2"
 	"github.com/urfave/cli/v2"
+	"go.uber.org/zap"
 	"gopkg.in/yaml.v3"
 
 	"go.vixal.xyz/esp/pkg/fs"
@@ -74,6 +76,8 @@ type Options struct {
 	HttpMode           string              `yaml:"HttpMode" json:"-" flag:"http-mode"`
 	HttpCompression    string              `yaml:"HttpCompression" json:"-" flag:"http-compression"`
 	DetachServer       bool                `yaml:"DetachServer" json:"-" flag:"detach-server"`
+	CertFile           string              `yaml:"CertFile" json:"cert_file" flag:"cert"`
+	KeyFile            string              `yaml:"KeyFile" json:"key_file" flag:"key"`
 	DownloadToken      string              `yaml:"DownloadToken" json:"-" flag:"download-token"`
 	PreviewToken       string              `yaml:"PreviewToken" json:"-" flag:"preview-token"`
 	SessionConfig      *SessionConfig      `yaml:"Store"`
@@ -363,36 +367,60 @@ type SessionConfig struct {
 // 2. SetContext: Which comes after Load and overrides
 //    any previous options giving an option two override file configs through the CLI.
 func NewOptions(ctx *cli.Context) *Options {
-	c := &Options{}
-
+	opt := &Options{}
+	log := L()
 	if ctx == nil {
-		return c
+		return opt
 	}
 
-	c.Name = ctx.App.Name
-	c.Copyright = ctx.App.Copyright
-	c.Version = ctx.App.Version
-	c.ConfigFile = fs.Abs(ctx.String("config-file"))
+	opt.Name = ctx.App.Name
+	opt.Copyright = ctx.App.Copyright
+	opt.Version = ctx.App.Version
+	opt.ConfigFile = fs.Abs(ctx.String("config-file"))
 
-	if err := c.Load(c.ConfigFile); err != nil {
-		log.Debug(err)
+	if err := opt.Load(opt.ConfigFile); err != nil {
+		log.Debug(err.Error())
 	}
 
-	if err := c.SetContext(ctx); err != nil {
-		log.Error(err)
+	if err := opt.SetContext(ctx); err != nil {
+		log.Error(err.Error())
 	}
-	if c.FiberConfig == nil {
-		c.FiberConfig = &FiberConfig{
-			MiddleWare: &MiddleWare{},
+	if opt.FiberConfig == nil {
+		opt.FiberConfig = &FiberConfig{
+			Prefork:                   false,
+			ServerHeader:              "",
+			StrictRouting:             false,
+			CaseSensitive:             false,
+			Immutable:                 false,
+			UnescapePath:              false,
+			ETag:                      false,
+			BodyLimit:                 4194303,
+			Concurrency:               262144,
+			ReadTimeout:               0,
+			WriteTimeout:              0,
+			IdleTimeout:               0,
+			ReadBufferSize:            4096,
+			WriteBufferSize:           4096,
+			CompressedFileSuffix:      ".fiber.gz",
+			ProxyHeader:               "",
+			GETOnly:                   false,
+			DisableKeepalive:          false,
+			DisableDefaultDate:        false,
+			DisableDefaultContentType: false,
+			DisableHeaderNormalizing:  false,
+			DisableStartupMessage:     false,
+			ReduceMemoryUsage:         false,
+			MiddleWare:                &MiddleWare{},
+			Network:                   fiber.NetworkTCP,
 		}
 	}
-	if c.FiberConfig.MiddleWare == nil {
-		c.FiberConfig.MiddleWare = &MiddleWare{}
+	if opt.FiberConfig.MiddleWare == nil {
+		opt.FiberConfig.MiddleWare = &MiddleWare{}
 	}
-	if c.FiberViews == nil {
-		c.FiberViews = &FiberViewConfig{}
+	if opt.FiberViews == nil {
+		opt.FiberViews = &FiberViewConfig{}
 	}
-	return c
+	return opt
 }
 
 // expandFilenames converts path in config to absolute path
@@ -475,7 +503,9 @@ func (c *Options) SetContext(ctx *cli.Context) error {
 					fieldValue.SetBool(f)
 				}
 			default:
-				log.Warnf("can't assign value of type %s from cli flag %s", t, tagValue)
+				L().Warn("can't assign value from cli flag",
+					zap.Reflect("type", t),
+					zap.String("tag", tagValue))
 			}
 		}
 	}

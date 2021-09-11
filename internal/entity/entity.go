@@ -1,32 +1,40 @@
 package entity
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
+	"go.uber.org/zap"
 	"gorm.io/gorm"
 
 	"go.vixal.xyz/esp/internal/event"
 )
 
-var log = event.Log.Sugar()
+func S() *zap.SugaredLogger {
+	return event.S()
+}
 
-func logError(result *gorm.DB) {
-	if result.Error != nil {
-		log.Error(result.Error.Error())
-	}
+func L() *zap.Logger {
+	return event.L()
 }
 
 type Types map[string]interface{}
 
 // Entities List of database entities and their table names.
 var Entities = Types{
-	"error":    &Error{},
-	"user":     &User{},
-	"password": &Password{},
-	"dept":     &Dept{},
-	"address":  &Address{},
-	"menu":     &Menu{},
+	"error":      &Error{},
+	"address":    &Address{},
+	"user":       &User{},
+	"department": &Department{},
+	"password":   &Password{},
+	"menu":       &Menu{},
+	"country":    &Country{},
+	"place":      &Place{},
+	"cell":       &Cell{},
+	"label":      &Label{},
+	"link":       &Link{},
+	"categories": &Category{},
 	// "organization":              &Organization{},
 	// "oauth_client":              &OauthClient{},
 	// "user_registration_profile": &UserRegistrationProfile{},
@@ -45,11 +53,13 @@ func (list Types) WaitForMigration() {
 	for name := range list {
 		for i := 0; i <= attempts; i++ {
 			count := RowCount{}
-			if err := DB().Raw(fmt.Sprintf("SELECT COUNT(*) AS count FROM %s", name)).Scan(&count).Error; err == nil {
-				// log.Debugf("entity: table %s migrated", name)
+			if err := DB().Raw(fmt.Sprintf(`SELECT COUNT(*) AS count FROM "%s"`, name)).Scan(&count).Error; err == nil {
+				// log.Debug("entity: table migrated", zap.String("name", name))
 				break
 			} else {
-				log.Debugf("entity: wait for migration %s (%s)", err.Error(), name)
+				L().Debug("entity: wait for migration",
+					zap.String("name", name),
+					zap.Error(err))
 			}
 
 			if i == attempts {
@@ -63,12 +73,21 @@ func (list Types) WaitForMigration() {
 
 // Truncate removes all data from tables without dropping them.
 func (list Types) Truncate() {
+	var retries []string
 	for name := range list {
-		if err := DB().Exec(fmt.Sprintf("DELETE FROM %s WHERE 1", name)).Error; err == nil {
-			// log.Debugf("entity: removed all data from %s", name)
-			break
-		} else if err.Error() != "record not found" {
-			log.Debugf("entity: %s in %s", err, name)
+		if err := DB().Exec(fmt.Sprintf(`DELETE FROM "%s" WHERE 1 = 1`, name)).Error; err == nil {
+			L().Debug("entity: removed all data from", zap.String("name", name))
+		} else if errors.Is(err, gorm.ErrRecordNotFound) {
+			L().Debug("entity:", zap.String("name", name), zap.Error(err))
+		} else {
+			retries = append(retries, name)
+		}
+	}
+	for _, name := range retries {
+		if err := DB().Exec(fmt.Sprintf(`DELETE FROM "%s" WHERE 1 = 1`, name)).Error; err == nil {
+			L().Debug("entity: removed all data from", zap.String("name", name))
+		} else if errors.Is(err, gorm.ErrRecordNotFound) {
+			L().Debug("entity:", zap.String("name", name), zap.Error(err))
 		}
 	}
 }
@@ -77,7 +96,7 @@ func (list Types) Truncate() {
 func (list Types) Migrate() {
 	for _, entity := range list {
 		if err := UnscopedDB().AutoMigrate(entity); err != nil {
-			log.Debugf("entity: migrate %s (waiting 1s)", err.Error())
+			L().Debug("entity: migrate (waiting 1s)", zap.Error(err))
 
 			time.Sleep(time.Second)
 
@@ -100,12 +119,13 @@ func (list Types) Drop() {
 // CreateDefaultFixtures Creates default database entries for test and production.
 func CreateDefaultFixtures() {
 	CreateUnknownAddress()
-	CreateUnknownDept()
+	CreateUnknownDepartment()
 	CreateDefaultUsers()
 
-	// CreateUnknownPlace()
-	// CreateUnknownLocation()
-	// CreateUnknownCountry()
+	CreateUnknownPlace()
+	CreateUnknownLocation()
+	CreateUnknownCountry()
+	CreateUnknownMenu()
 	// CreateUnknownCamera()
 	// CreateUnknownLens()
 }
@@ -136,17 +156,24 @@ func InitTestDb(driver, dsn string) *Gorm {
 	}
 
 	if driver == "test" || driver == "sqlite" || driver == "" || dsn == "" {
-		driver = "sqlite3"
+		driver = SQLite
 		dsn = ".test.db"
 	}
+	if driver == "postgresql" {
+		driver = Postgres
+	}
 
-	log.Infof("initializing %s test db in %s", driver, dsn)
+	L().Info("initializing test db",
+		zap.String("driver", driver),
+		zap.String("dsn", dsn))
 
 	db := &Gorm{
 		Driver: driver,
 		Dsn:    dsn,
 	}
-
+	if err := db.Connect(); err != nil {
+		L().Fatal(err.Error())
+	}
 	SetDBProvider(db)
 	ResetTestFixtures()
 

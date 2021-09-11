@@ -7,6 +7,7 @@ import (
 
 	"github.com/gosimple/slug"
 	"github.com/jinzhu/inflection"
+	"go.uber.org/zap"
 	"gorm.io/gorm"
 
 	"go.vixal.xyz/esp/internal/entity"
@@ -14,11 +15,23 @@ import (
 	"go.vixal.xyz/esp/pkg/txt"
 )
 
-var log = event.Log.Sugar()
+func S() *zap.SugaredLogger  {
+	return event.S()
+}
+
+func L() *zap.Logger  {
+	return event.L()
+}
+
+const (
+	Postgres = "postgres"
+	MySQL    = "mysql"
+	SQLite   = "sqlite3"
+	Or       = "|"
+)
 
 // MaxResults Max result limit for queries.
 const MaxResults = 10000
-
 
 type Query struct {
 	db *gorm.DB

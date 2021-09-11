@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"go.uber.org/zap"
 	"gopkg.in/yaml.v3"
 
 	"go.vixal.xyz/esp/internal/i18n"
@@ -219,13 +220,13 @@ func (s *Settings) Save(fileName string) error {
 func (c *Config) initSettings() {
 	c.settings = NewSettings()
 	fileName := c.SettingsFile()
-
+	log := L()
 	if err := c.settings.Load(fileName); err == nil {
-		log.Debugf("config: settings loaded from %s ", fileName)
+		log.Debug("config: settings loaded from ", zap.String("fileName", fileName))
 	} else if err := c.settings.Save(fileName); err != nil {
-		log.Errorf("failed creating %s: %s", fileName, err)
+		log.Error("failed creating", zap.String("fileName", fileName), zap.Error(err))
 	} else {
-		log.Debugf("config: created %s ", fileName)
+		log.Debug("config: created", zap.String("fileName", fileName))
 	}
 
 	i18n.SetDir(c.LocalesPath())

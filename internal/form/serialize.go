@@ -8,6 +8,8 @@ import (
 	"time"
 	"unicode"
 
+	"go.uber.org/zap"
+
 	"go.vixal.xyz/esp/pkg/dateparse"
 	"go.vixal.xyz/esp/pkg/txt"
 )
@@ -69,7 +71,8 @@ func Serialize(f interface{}, all bool) string {
 					q = append(q, fmt.Sprintf("%s:%t", fieldName, fieldValue.Bool()))
 				}
 			default:
-				log.Warnf("can't serialize value of type %s from form field %s", t, fieldName)
+				L().Warn("can't serialize value from form field",
+					zap.Reflect("type", t), zap.String("fieldName", fieldName))
 			}
 		}
 	}
@@ -156,7 +159,7 @@ func Unserialize(f SearchForm, q string) (result error) {
 	}
 
 	if result != nil {
-		log.Errorf("error while parsing form values: %s", result)
+		L().Error("error while parsing form values", zap.Error(result))
 	}
 
 	return result

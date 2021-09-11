@@ -24,22 +24,10 @@ var GlobalFlags = []cli.Flag{
 		EnvVars: []string{"GOSH_DEMO"},
 	},
 	&cli.BoolFlag{
-		Name:    "sponsor",
-		Hidden:  true,
-		Usage:   "your continuous support helps to pay for development and operating expenses",
-		EnvVars: []string{"GOSH_SPONSOR"},
-	},
-	&cli.BoolFlag{
 		Name:    "public, p",
 		Aliases: []string{"p"},
 		Usage:   "no authentication required, disables password protection",
 		EnvVars: []string{"GOSH_PUBLIC"},
-	},
-	&cli.BoolFlag{
-		Name:    "read-only",
-		Aliases: []string{"r"},
-		Usage:   "don't modify originals folder; disables import, upload, and delete",
-		EnvVars: []string{"GOSH_READONLY"},
 	},
 	&cli.BoolFlag{
 		Name:    "experimental",
@@ -99,26 +87,6 @@ var GlobalFlags = []cli.Flag{
 		Usage:   "background worker wakeup interval in `SECONDS`",
 		EnvVars: []string{"GOSH_WAKEUP_INTERVAL"},
 	},
-	&cli.IntFlag{
-		Name:    "auto-index",
-		Usage:   "auto indexing safety delay in `SECONDS` (WebDAV)",
-		EnvVars: []string{"GOSH_AUTO_INDEX"},
-	},
-	&cli.IntFlag{
-		Name:    "auto-import",
-		Usage:   "auto importing safety delay in `SECONDS` (WebDAV)",
-		EnvVars: []string{"GOSH_AUTO_IMPORT"},
-	},
-	&cli.BoolFlag{
-		Name:    "disable-backups",
-		Usage:   "don't backup photo and album metadata to YAML files",
-		EnvVars: []string{"GOSH_DISABLE_BACKUPS"},
-	},
-	&cli.BoolFlag{
-		Name:    "disable-webdav",
-		Usage:   "disables built-in WebDAV server",
-		EnvVars: []string{"GOSH_DISABLE_WEBDAV"},
-	},
 	&cli.BoolFlag{
 		Name:    "disable-settings",
 		Usage:   "users can not view or change settings",
@@ -137,31 +105,15 @@ var GlobalFlags = []cli.Flag{
 		EnvVars: []string{"GOSH_LOG_LEVEL"},
 	},
 	&cli.StringFlag{
-		Name:    "log-filename",
-		Usage:   "server log `FILENAME`",
-		EnvVars: []string{"GOSH_LOG_FILENAME"},
-		Value:   "",
-	},
-	&cli.StringFlag{
 		Name:    "pid-filename",
 		Usage:   "server process id `FILENAME`",
 		EnvVars: []string{"GOSH_PID_FILENAME"},
-	},
-	&cli.StringFlag{
-		Name:    "cdn-url",
-		Usage:   "content delivery network `URL` (optional)",
-		EnvVars: []string{"GOSH_CDN_URL"},
 	},
 	&cli.StringFlag{
 		Name:    "site-url",
 		Usage:   "public site `URL`",
 		Value:   "http://localhost:2342/",
 		EnvVars: []string{"GOSH_SITE_URL"},
-	},
-	&cli.StringFlag{
-		Name:    "site-preview",
-		Usage:   "public preview image `URL`",
-		EnvVars: []string{"GOSH_SITE_PREVIEW"},
 	},
 	&cli.StringFlag{
 		Name:    "site-title",
@@ -210,13 +162,13 @@ var GlobalFlags = []cli.Flag{
 	},
 	&cli.StringFlag{
 		Name:    "database-driver",
-		Usage:   "database driver `NAME` (sqlite or mysql)",
+		Usage:   "database driver `NAME` (sqlite or mysql, postgres)",
 		Value:   "sqlite",
 		EnvVars: []string{"GOSH_DATABASE_DRIVER"},
 	},
 	&cli.StringFlag{
 		Name:    "database-dsn",
-		Usage:   "sqlite file name, specifying a `DSN` is optional for mariadb and mysql",
+		Usage:   "sqlite file name, specifying a `DSN` is optional for mariadb/mysql and postgres",
 		EnvVars: []string{"GOSH_DATABASE_DSN"},
 	},
 	&cli.StringFlag{

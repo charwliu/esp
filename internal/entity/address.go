@@ -2,6 +2,8 @@ package entity
 
 import (
 	"fmt"
+
+	"go.uber.org/zap"
 )
 
 type Addresses []Address
@@ -9,6 +11,7 @@ type Addresses []Address
 // Address represents a postal address.
 type Address struct {
 	ID              int     `gorm:"primary_key" json:"ID" yaml:"ID"`
+	CellID          string  `gorm:"size:42;index;default:'zz'" json:"CellID" yaml:"CellID"`
 	AddressLat      float32 `gorm:"index;" json:"Lat,omitempty" yaml:"Lat,omitempty"`
 	AddressLng      float32 `gorm:"index;" json:"Lng,omitempty" yaml:"Lng,omitempty"`
 	AddressLine1    string  `gorm:"size:255;" json:"Line1,omitempty" yaml:"Line1,omitempty"`
@@ -28,6 +31,7 @@ func (Address) TableName() string {
 // UnknownAddress Unknown postal address.
 var UnknownAddress = Address{
 	ID:             1,
+	CellID:         UnknownLocation.ID,
 	AddressCountry: UnknownCountry.ID,
 }
 
@@ -40,14 +44,16 @@ func CreateUnknownAddress() {
 func FirstOrCreateAddress(m *Address) *Address {
 	result := Address{}
 
-	if err := DB().First(&result).Error; err == nil {
+	if err := DB().Where("cell_id = ?", m.CellID).First(&result).Error; err == nil {
 		return &result
 	} else if createErr := m.Create(); createErr == nil {
 		return m
-	} else if err := DB().First(&result).Error; err == nil {
+	} else if err := DB().Where("cell_id =?", m.CellID).First(&result).Error; err == nil {
 		return &result
 	} else {
-		log.Errorf("address: %s (find or create %s)", createErr, m.String())
+		L().Error("address: find or create",
+			zap.Stringer("address", m),
+			zap.Error(createErr))
 	}
 
 	return nil

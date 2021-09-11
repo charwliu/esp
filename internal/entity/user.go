@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"go.uber.org/zap"
 	"gorm.io/gorm"
 
 	"go.vixal.xyz/esp/internal/i18n"
@@ -16,34 +17,44 @@ type Users []*User
 
 // User 用户信息表
 type User struct {
-	ID            int64          `gorm:"primary_key" json:"-"`
-	DeptID        int64          `gorm:"default:1" json:"-" yaml:"-"`                     // 部门ID
-	UserUID       string         `gorm:"size:32;not null" json:"userid"`                  // 用户ID
-	UserName      string         `gorm:"size:32;not null;unique" json:"username"`         // 登录账号
-	JobLevel      string         `gorm:"size:32" json:"jobLevel,omitempty"`               // 职位级别
-	UserType      string         `gorm:"size:2;default:00" json:"userType,omitempty"`     // 用户类型（00系统用户）
-	Email         string         `gorm:"size:50;default:''" json:"email,omitempty"`       // 用户邮箱
-	PhoneNumber   string         `gorm:"size:16;default:''" json:"phoneNumber,omitempty"` // 手机号码
-	Avatar        string         `gorm:"size:100;default:''" json:"avatar,omitempty"`     // 头像路径
-	Gender        int16          `gorm:"size:1" json:"gender,omitempty"`                  // 用户性别（0男 1女 2未知）
-	Status        int16          `gorm:"size:1;default:0" json:"status,omitempty"`        // 帐号状态（0正常 1停用）
-	LoginIP       string         `gorm:"size:50;default:''" json:"loginIp,omitempty"`     // 最后登陆IP
-	LoginAt       time.Time      `json:"-"`                                               // 最后登陆时间
-	Remark        string         `gorm:"size:500" json:"remark,omitempty"`                // 备注
-	OpenID        string         `gorm:"size:100" json:"openId,omitempty"`                // 微信OpenId
-	NickName      string         `gorm:"size:100" json:"nickName,omitempty"`              // 昵称
-	Name          string         `gorm:"size:100" json:"name,omitempty"`                  // 昵称
-	WxAvatar      string         `gorm:"size:200" json:"wxAvatar,omitempty"`              // 微信头像
-	LoginAttempts int16          `json:"-" yaml:"-"`
-	Roles         []*Role        `gorm:"constraint:OnUpdate:CASCADE,OnDelete:SET NULL;many2many:user_role;" json:"roles,omitempty"`
-	Address       *Address       `gorm:"association_autoupdate:false;association_autocreate:false;association_save_reference:false;PRELOAD:true;" json:"address,omitempty" yaml:"Address,omitempty"`
-	AddressID     int            `gorm:"default:1" json:"-" yaml:"-"`
-	CreatedBy     string         `gorm:"size:64;default:''" json:"-"` // 创建者
-	UpdatedBy     string         `gorm:"size:64;default:''" json:"-"` // 更新者
-	CreatedAt     time.Time      `json:"-"`                           // 创建时间
-	UpdatedAt     time.Time      `json:"-"`                           // 更新时间
-	DeletedAt     gorm.DeletedAt `gorm:"index" json:"-"`              // 删除时间
-	Dept          *Dept          `json:"dept,omitempty"`
+	ID             int64          `gorm:"primary_key" json:"-"`
+	UserUID        string         `gorm:"size:32;not null" json:"UID"`             // 用户ID
+	UserName       string         `gorm:"size:32;not null;unique" json:"UserName"` // 登录账号
+	UserStatus     string         `gorm:"size:32;" json:"UserStatus" yaml:"UserStatus,omitempty"`
+	JobLevel       string         `gorm:"size:32" json:"jobLevel,omitempty"`           // 职位级别
+	UserType       string         `gorm:"size:2;default:00" json:"userType,omitempty"` // 用户类型（00系统用户）
+	PrimaryEmail   string         `gorm:"size:255;index;" json:"PrimaryEmail" yaml:"PrimaryEmail,omitempty"`
+	EmailConfirmed bool           `json:"EmailConfirmed" yaml:"EmailConfirmed,omitempty"`
+	PhoneNumber    string         `gorm:"size:16;default:''" json:"phoneNumber,omitempty"` // 手机号码
+	Avatar         string         `gorm:"size:100;default:''" json:"avatar,omitempty"`     // 头像路径
+	Gender         int16          `gorm:"size:1" json:"gender,omitempty"`                  // 用户性别（0男 1女 2未知）
+	Status         int16          `gorm:"size:1;default:0" json:"status,omitempty"`        // 帐号状态（0正常 1停用）
+	PersonPhone    string         `gorm:"size:32;" json:"PersonPhone" yaml:"PersonPhone,omitempty"`
+	PersonStatus   string         `gorm:"size:32;" json:"PersonStatus" yaml:"PersonStatus,omitempty"`
+	PersonAvatar   string         `gorm:"size:255;" json:"PersonAvatar" yaml:"PersonAvatar,omitempty"`
+	PersonLocation string         `gorm:"size:128;" json:"PersonLocation" yaml:"PersonLocation,omitempty"`
+	PersonBio      string         `gorm:"type:TEXT;" json:"PersonBio" yaml:"PersonBio,omitempty"`
+	LoginIP        string         `gorm:"size:128;default:''" json:"loginIp,omitempty"` // 最后登陆IP
+	LoginAt        time.Time      `json:"-"`                                            // 最后登陆时间
+	LoginAttempts  int16          `json:"-" yaml:"-"`
+	Remark         string         `gorm:"size:500" json:"remark,omitempty"` // 备注
+	OpenID         string         `gorm:"size:100" json:"openId,omitempty"` // 微信OpenId
+	FullName       string         `gorm:"size:128;" json:"FullName" yaml:"FullName,omitempty"`
+	NickName       string         `gorm:"size:100" json:"nickName,omitempty"`                 // 昵称
+	JobTitle       string         `gorm:"size:64;" json:"JobTitle" yaml:"JobTitle,omitempty"` // 职位
+	BirthYear      int            `json:"BirthYear" yaml:"BirthYear,omitempty"`
+	BirthMonth     int            `json:"BirthMonth" yaml:"BirthMonth,omitempty"`
+	BirthDay       int            `json:"BirthDay" yaml:"BirthDay,omitempty"`
+	Roles          []*Role        `gorm:"constraint:OnUpdate:CASCADE,OnDelete:SET NULL;many2many:user_role;" json:"roles,omitempty"`
+	Address        *Address       `gorm:"association_autoupdate:false;association_autocreate:false;association_save_reference:false;PRELOAD:true;" json:"Address,omitempty" yaml:"Address,omitempty"`
+	AddressID      int            `gorm:"default:1" json:"-" yaml:"-"`
+	CreatedBy      string         `gorm:"size:64;default:''" json:"-"` // 创建者
+	UpdatedBy      string         `gorm:"size:64;default:''" json:"-"` // 更新者
+	CreatedAt      time.Time      `json:"-"`                           // 创建时间
+	UpdatedAt      time.Time      `json:"-"`                           // 更新时间
+	DeletedAt      gorm.DeletedAt `gorm:"index" json:"-"`              // 删除时间
+	DepartmentID   int64          `gorm:"default:1" json:"-" yaml:"-"` // 部门ID
+	Department     *Department    `json:"Department,omitempty"`
 }
 
 // TableName get sql table name.
@@ -54,12 +65,13 @@ func (User) TableName() string {
 
 // Admin Default admin user.
 var Admin = User{
-	ID:          1,
-	AddressID:   1,
-	UserName:    "admin",
-	Email:       "Admin@example.com",
-	PhoneNumber: "1329394934",
-	DeptID:      0,
+	ID:           1,
+	AddressID:    1,
+	UserName:     "admin",
+	PrimaryEmail: "Admin@example.com",
+	PhoneNumber:  "1329394934",
+	DepartmentID:       0,
+	Avatar:       "https://gw.alipayobjects.com/zos/antfincdn/XAosXuNZyF/BiazfanxmamNRoxxVxka.png",
 }
 
 // CreateDefaultUsers initializes the database with default user accounts.
@@ -102,7 +114,7 @@ func FirstOrCreateUser(m *User) (*User, error) {
 		First(&result).Error; err == nil {
 		return &result, errors.New(i18n.Msg(i18n.ErrAlreadyExists, result.UserName))
 	} else if err = m.Create(); err != nil {
-		log.Errorf("user: %s, %s", m.UserUID, err)
+		L().Error("user:", zap.String("UserUID",m.UserUID), zap.Error(err))
 		return nil, err
 	}
 
@@ -118,13 +130,13 @@ func FindUserByName(userName string) (*User, error) {
 	result := User{}
 
 	if err := DB().Preload("Address").
-		Preload("Dept").
+		Preload("Department").
 		Preload("Roles").
 		Joins("LEFT JOIN user_role ur ON ur.user_id = id").
 		Where("user_name = ?", userName).First(&result).Error; err == nil {
 		return &result, nil
 	} else {
-		log.Errorf("user %s not found", txt.Quote(userName))
+		L().Error("user not found", zap.String("name", userName))
 		return nil, err
 	}
 }
@@ -138,13 +150,13 @@ func FindUserByUID(uid string) (*User, error) {
 	result := User{}
 
 	if err := DB().Preload("Address").
-		Preload("Dept").
+		Preload("Department").
 		Preload("Roles").
 		Joins("LEFT JOIN user_role ur ON ur.user_id = id").
 		Where("user_uid = ?", uid).First(&result).Error; err == nil {
 		return &result, nil
 	} else {
-		log.Errorf("user %s not found", txt.Quote(uid))
+		L().Error("user not found", zap.String("uid", uid));
 		return nil, err
 	}
 }
@@ -181,7 +193,7 @@ func (m *User) SetPassword(password string) error {
 // InitPassword sets the initial user password stored as hash.
 func (m *User) InitPassword(password string) {
 	if !m.Registered() {
-		log.Warn("only registered users can change their password")
+		L().Warn("only registered users can change their password")
 		return
 	}
 
@@ -198,14 +210,14 @@ func (m *User) InitPassword(password string) {
 	pw := NewPassword(m.UserUID, password)
 
 	if err := pw.Save(); err != nil {
-		log.Error(err)
+		L().Error(err.Error())
 	}
 }
 
 // InvalidPassword returns true if the given password does not match the hash.
 func (m *User) InvalidPassword(password string) bool {
 	if !m.Registered() {
-		log.Warn("only registered users can change their password")
+		L().Warn("only registered users can change their password")
 		return true
 	}
 
@@ -223,15 +235,20 @@ func (m *User) InvalidPassword(password string) bool {
 
 	if pw.InvalidPassword(password) {
 		if err := DB().Model(m).UpdateColumn("login_attempts", gorm.Expr("login_attempts + ?", 1)).Error; err != nil {
-			log.Errorf("user: %s (update login attempts)", err)
+
+			L().Error("user: update login attempts", zap.Error(err))
 		}
 
 		return true
 	}
 
 	if err := DB().Model(m).Updates(map[string]interface{}{"login_attempts": 0, "login_at": Timestamp()}).Error; err != nil {
-		log.Errorf("user: %s (update last login)", err)
+		L().Error("user: update last login", zap.Error(err))
 	}
 
 	return false
+}
+
+func (m *User) DepartmentName() string {
+	return m.Department.DepartmentName
 }

@@ -4,6 +4,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/gofiber/fiber/v2"
+
 	"go.vixal.xyz/esp/pkg/fs"
 )
 
@@ -15,11 +17,34 @@ func (c *Config) DetachServer() bool {
 // HttpHost returns the built-in HTTP server host name or IP address (empty for all interfaces).
 func (c *Config) HttpHost() string {
 	if c.options.HttpHost == "" {
-		return "0.0.0.0"
+		if c.fiber.Network == fiber.NetworkTCP6 {
+			return "[::1]"
+		} else if c.fiber.Network == fiber.NetworkTCP4 {
+			return "0.0.0.0"
+		} else {
+			return ""
+		}
 	}
 
 	return c.options.HttpHost
 }
+
+func (c *Config) CertFile() string  {
+	if c.options.CertFile == "" {
+		c.options.CertFile = "server.pem"
+	}
+	return c.options.CertFile
+}
+
+func (c *Config) KeyFile() string  {
+	if c.options.KeyFile == "" {
+		c.options.KeyFile = "server.key"
+	}
+	return c.options.KeyFile
+}
+
+
+
 
 // HttpPort returns the built-in HTTP server port.
 func (c *Config) HttpPort() int {

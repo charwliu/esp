@@ -58,7 +58,7 @@ func UserLogin(router fiber.Router) {
 					// Set the users ID in the session
 					session.Set("userid", user.UserUID)
 					session.Set("Role", user.Roles)
-					log.Info("User set in store with", zap.String("ID", user.UserUID))
+					zap.L().Info("User set in store with", zap.String("ID", user.UserUID))
 					if err = session.Save(); err != nil {
 						return Unexpected(ctx, err)
 					}

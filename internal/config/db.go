@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"go.uber.org/zap"
 	"gorm.io/driver/mysql"
 	"gorm.io/driver/postgres"
 	"gorm.io/driver/sqlite"
@@ -42,7 +43,8 @@ func (c *Config) DatabaseDriver() string {
 	case SQLServer, "mssql":
 		c.options.DatabaseDriver = SQLServer
 	default:
-		log.Warnf("config: unsupported database driver %s, using sqlite", c.options.DatabaseDriver)
+		L().Warn("config: unsupported database driver, using sqlite",
+			zap.String("driver", c.options.DatabaseDriver))
 		c.options.DatabaseDriver = SQLite
 		c.options.DatabaseDsn = ""
 	}
@@ -82,7 +84,7 @@ func (c *Config) DatabaseDsn() string {
 		case SQLite:
 			return filepath.Join(c.StoragePath(), "index.db")
 		default:
-			log.Errorf("config: empty database dsn")
+			L().Error("config: empty database dsn")
 			return ""
 		}
 	}
@@ -215,7 +217,7 @@ func (c *Config) DatabaseConnsIdle() int {
 // DB returns the db connection.
 func (c *Config) DB() *gorm.DB {
 	if c.db == nil {
-		log.Fatal("config: database not connected")
+		L().Fatal("config: database not connected")
 	}
 
 	return c.db
@@ -292,22 +294,22 @@ func (c *Config) connectDB() error {
 		switch dbDriver {
 		case MySQL, MariaDB:
 			db, err = gorm.Open(mysql.Open(dbDsn),
-				&gorm.Config{Logger: logger.Default.LogMode(logger.Silent)},
+				&gorm.Config{Logger: NewGormLogger(logger.Silent)},
 			)
 			break
 		case Postgres:
 			db, err = gorm.Open(postgres.Open(dbDsn),
-				&gorm.Config{Logger: logger.Default.LogMode(logger.Info)},
+				&gorm.Config{Logger: NewGormLogger(logger.Info)},
 			)
 			break
 		case SQLite:
 			db, err = gorm.Open(sqlite.Open(dbDsn),
-				&gorm.Config{Logger: logger.Default.LogMode(logger.Silent)},
+				&gorm.Config{Logger: NewGormLogger(logger.Silent)},
 			)
 			break // Not required as unicode is default.
 		case SQLServer:
 			db, err = gorm.Open(sqlserver.Open(dbDsn),
-				&gorm.Config{Logger: logger.Default.LogMode(logger.Silent)},
+				&gorm.Config{Logger: NewGormLogger(logger.Silent)},
 			)
 			break
 		}
@@ -320,20 +322,16 @@ func (c *Config) connectDB() error {
 		}
 	}
 	if err != nil || db == nil {
-		fmt.Println(err)
-		log.Error(err)
+		L().Fatal(err.Error())
 	}
 
-	//db.Logger = log
-
-	sqlDB, err := db.DB()
-	if err == nil {
+	if sqlDB, err := db.DB(); err == nil {
 		sqlDB.SetMaxIdleConns(c.DatabaseConnsIdle())
 		sqlDB.SetMaxOpenConns(c.DatabaseConns())
 		sqlDB.SetConnMaxLifetime(10 * time.Minute)
 	}
 	c.db = db
-	return err
+	return nil
 }
 
 // ImportSQL imports a file to the currently configured database.
@@ -341,7 +339,7 @@ func (c *Config) ImportSQL(filename string) {
 	contents, err := os.ReadFile(filename)
 
 	if err != nil {
-		log.Error(err)
+		L().Error(err.Error())
 		return
 	}
 

@@ -52,7 +52,7 @@ func CreateUser(router fiber.Router) {
 		}
 		user := &entity.User{
 			UserName:    req.Username,
-			Email:       req.Email,
+			PrimaryEmail:       req.Email,
 			PhoneNumber: req.Mobile,
 		}
 		if result, err := entity.FirstOrCreateUser(user); err != nil {
@@ -94,7 +94,7 @@ func EditUser(router fiber.Router) {
 			return UserNotFound(ctx, err)
 		} else {
 			user.UserName = editUser.UserName
-			user.Email = editUser.Email
+			user.PrimaryEmail = editUser.PrimaryEmail
 			user.Status = editUser.Status
 			user.Avatar = editUser.Avatar
 			if err = user.Save(); err != nil {

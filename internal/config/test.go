@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/urfave/cli/v2"
+	"go.uber.org/zap"
 
 	"go.vixal.xyz/esp/pkg/capture"
 	"go.vixal.xyz/esp/pkg/fs"
@@ -101,6 +102,7 @@ func TestConfig() *Config {
 
 // NewTestConfig inits valid config used for testing
 func NewTestConfig() *Config {
+	log := L()
 	defer log.Debug(capture.Time(time.Now(), "config: new test config created"))
 
 	testConfigMutex.Lock()
@@ -114,15 +116,15 @@ func NewTestConfig() *Config {
 	s := NewSettings()
 
 	if err := os.MkdirAll(c.ConfigPath(), os.ModePerm); err != nil {
-		log.Fatalf("config: %s", err.Error())
+		log.Fatal("config:", zap.Error(err))
 	}
 
 	if err := s.Save(filepath.Join(c.ConfigPath(), "settings.yml")); err != nil {
-		log.Fatalf("config: %s", err.Error())
+		log.Fatal("config:", zap.Error(err))
 	}
 
 	if err := c.Init(); err != nil {
-		log.Fatalf("config: %s", err.Error())
+		log.Fatal("config:", zap.Error(err))
 	}
 
 	c.InitTestDB()

@@ -3,11 +3,9 @@ package api
 import (
 	"github.com/gofiber/fiber/v2"
 
-	"go.vixal.xyz/esp/internal/event"
 	"go.vixal.xyz/esp/internal/i18n"
 )
 
-var log = event.Log.Sugar()
 
 func Success(ctx *fiber.Ctx, data interface{}) error {
 	return ctx.Status(fiber.StatusOK).JSON(data)

@@ -4,16 +4,15 @@ import (
 	"os"
 
 	"github.com/urfave/cli/v2"
+	"go.uber.org/zap"
 
 	"go.vixal.xyz/esp/internal/commands"
 	"go.vixal.xyz/esp/internal/config"
-	"go.vixal.xyz/esp/internal/event"
-
 	_ "go.vixal.xyz/esp/openapi"
 )
 
 var version = "development"
-var log = event.Log
+
 
 // @title Gosh ESP API
 // @version 1.0
@@ -53,6 +52,7 @@ func main() {
 
 	err := app.Run(os.Args)
 	if err != nil {
-		log.Error(err.Error())
+		zap.S().Error(err.Error())
 	}
+
 }

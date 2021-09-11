@@ -3,6 +3,7 @@ package entity
 import (
 	"time"
 
+	"go.uber.org/zap"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -28,7 +29,7 @@ func NewPassword(uid, password string) Password {
 
 	if password != "" {
 		if err := m.SetPassword(password); err != nil {
-			log.Errorf("auth: failed setting password for %s", uid)
+			L().Error("auth: failed setting password for", zap.String("uid", uid))
 		}
 	}
 

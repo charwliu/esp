@@ -19,6 +19,10 @@ var VersionCommand = &cli.Command{
 func versionAction(ctx *cli.Context) error {
 	conf := config.NewConfig(ctx)
 
+	defer func() {
+		conf.LoggerClose()
+	}()
+
 	fmt.Println(conf.Version())
 
 	return nil

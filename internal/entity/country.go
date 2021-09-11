@@ -2,6 +2,7 @@ package entity
 
 import (
 	"github.com/gosimple/slug"
+	"go.uber.org/zap"
 	"gorm.io/gorm"
 
 	"go.vixal.xyz/esp/internal/event"
@@ -12,17 +13,18 @@ import (
 var altCountryNames = map[string]string{
 	"United States of America": "USA",
 	"United States":            "USA",
+	"China":                    "CN",
 	"":                         "Unknown",
 }
 
-// Country represents a country location, used for labeling photos.
+// Country represents a country location
 type Country struct {
-	ID                 string `gorm:"type:varchar(2);primary_key" json:"ID" yaml:"ID"`
-	CountrySlug        string `gorm:"type:varchar(255);unique_index;" json:"Slug" yaml:"-"`
-	CountryName        string `json:"UserName" yaml:"UserName,omitempty"`
+	ID                 string `gorm:"size:2;primary_key" json:"ID" yaml:"ID"`
+	CountrySlug        string `gorm:"size:255;unique_index;" json:"Slug" yaml:"-"`
+	CountryName        string `json:"CountryName" yaml:"CountryName,omitempty"`
 	CountryDescription string `gorm:"type:TEXT;" json:"Description,omitempty" yaml:"Description,omitempty"`
 	CountryNotes       string `gorm:"type:TEXT;" json:"Notes,omitempty" yaml:"Notes,omitempty"`
-	New bool `gorm:"-" json:"-" yaml:"-"`
+	New                bool   `gorm:"-" json:"-" yaml:"-"`
 }
 
 // UnknownCountry is defined here to use it as a default
@@ -58,6 +60,10 @@ func NewCountry(countryCode string, countryName string) *Country {
 	return result
 }
 
+func (Country) TableName() string {
+	return "country"
+}
+
 // Create inserts a new row to the database.
 func (m *Country) Create() error {
 	return DB().Create(m).Error
@@ -66,7 +72,7 @@ func (m *Country) Create() error {
 // FirstOrCreateCountry returns the existing row, inserts a new row or nil in case of errors.
 func FirstOrCreateCountry(m *Country) *Country {
 	if cacheData, ok := countryCache.Get(m.ID); ok {
-		log.Debugf("country: cache hit for %s", m.ID)
+		L().Debug("country: cache hit for", zap.String("id", m.ID))
 
 		return cacheData.(*Country)
 	}
@@ -90,7 +96,7 @@ func FirstOrCreateCountry(m *Country) *Country {
 		countryCache.SetDefault(m.ID, &result)
 		return &result
 	} else {
-		log.Errorf("country: %s (find or create %s)", createErr, m.ID)
+		L().Error("country: find or create", zap.String("id", m.ID), zap.Error(createErr), zap.Error(findErr))
 	}
 
 	return &UnknownCountry

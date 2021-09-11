@@ -18,3 +18,7 @@ type CourseJudge struct {
 	CreatedAt     time.Time `json:"created_at"`                          // 创建时间
 	UpdatedAt     time.Time `json:"updated_at"`                          // 更新时间
 }
+
+func (d CourseJudge) TableName() string {
+	return "course_judge"
+}

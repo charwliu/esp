@@ -19,6 +19,10 @@ var StatusCommand = &cli.Command{
 // statusAction shows the server health status
 func statusAction(ctx *cli.Context) error {
 	conf := config.NewConfig(ctx)
+	defer func() {
+		conf.LoggerClose()
+	}()
+
 	client := fasthttp.Client{}
 
 	url := fmt.Sprintf("http://%s:%d/api/v1/status", conf.HttpHost(), conf.HttpPort())

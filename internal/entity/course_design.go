@@ -18,27 +18,7 @@ type CourseDesign struct {
 	UpdatedAt      time.Time `json:"updated_at"`                           // 更新时间
 }
 
-// CourseDesignColumns get sql column name.获取数据库列名
-var CourseDesignColumns = struct {
-	DesignID       string
-	DesignQuestion string
-	DesignAnswer   string
-	DesignExplain  string
-	DesignStatus   string
-	DesignLabel    string
-	CreateBy       string
-	CreateTime     string
-	UpdateBy       string
-	UpdateTime     string
-}{
-	DesignID:       "design_id",
-	DesignQuestion: "design_question",
-	DesignAnswer:   "design_answer",
-	DesignExplain:  "design_explain",
-	DesignStatus:   "design_status",
-	DesignLabel:    "design_label",
-	CreateBy:       "create_by",
-	CreateTime:     "create_time",
-	UpdateBy:       "update_by",
-	UpdateTime:     "update_time",
+func (d CourseDesign) TableName() string  {
+	return "course_design"
 }
+

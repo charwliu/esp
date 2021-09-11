@@ -6,11 +6,8 @@ import (
 
 	"github.com/sevlyar/go-daemon"
 
-	"go.vixal.xyz/esp/internal/event"
 	"go.vixal.xyz/esp/pkg/fs"
 )
-
-var log = event.Log.Sugar()
 
 // childAlreadyRunning tests if a .pid file at filePath is a running process.
 // it returns the pid value and the running status (true or false).

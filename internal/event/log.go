@@ -6,7 +6,13 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
-var Log *zap.Logger
+func L()  *zap.Logger {
+	return zap.L()
+}
+
+func S() *zap.SugaredLogger  {
+	return zap.S()
+}
 
 type Hook struct {
 	hub *hub.Hub
@@ -28,8 +34,8 @@ func (h *Hook) Fire(entry zapcore.Entry) error {
 	return nil
 }
 
-func init() {
-	hook := NewHook(SharedHub())
-	Log, _ = zap.NewDevelopment(zap.AddStacktrace(zapcore.FatalLevel))
-	zapcore.RegisterHooks(Log.Core(), hook.Fire)
-}
+//func init() {
+//	hook := NewHook(SharedHub())
+//	Log, _ = zap.NewDevelopment(zap.AddStacktrace(zapcore.FatalLevel))
+//	zapcore.RegisterHooks(Log.Core(), hook.Fire)
+//}

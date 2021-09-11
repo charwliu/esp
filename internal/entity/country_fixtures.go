@@ -3,10 +3,10 @@ package entity
 type CountryMap map[string]Country
 
 var CountryFixtures = CountryMap{
-	"germany": {
-		ID:                 "de",
-		CountrySlug:        "germany",
-		CountryName:        "Germany",
+	"china": {
+		ID:                 "cn",
+		CountrySlug:        "china",
+		CountryName:        "China",
 		CountryDescription: "Country description",
 		CountryNotes:       "Country Notes",
 		New: false,

@@ -23,3 +23,7 @@ type CourseProgress struct {
 	Course       *CourseInfo
 	Customer     *User
 }
+
+func (CourseProgress) TableName() string {
+	return "course_progress"
+}

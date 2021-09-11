@@ -5,6 +5,7 @@ import (
 
 	"github.com/sevlyar/go-daemon"
 	"github.com/urfave/cli/v2"
+	"go.uber.org/zap"
 
 	"go.vixal.xyz/esp/internal/config"
 	"go.vixal.xyz/esp/pkg/txt"
@@ -22,30 +23,34 @@ var StopCommand = &cli.Command{
 func stopAction(ctx *cli.Context) error {
 	conf := config.NewConfig(ctx)
 
-	log.Infof("looking for pid in %s", txt.Quote(conf.PIDFilename()))
+	defer func() {
+		conf.LoggerClose()
+	}()
+
+	zap.S().Infof("looking for pid in %s", txt.Quote(conf.PIDFilename()))
 
 	dcxt := new(daemon.Context)
 	dcxt.PidFileName = conf.PIDFilename()
 	child, err := dcxt.Search()
 
 	if err != nil {
-		log.Fatal(err)
+		zap.S().Fatal(err)
 	}
 
 	err = child.Signal(syscall.SIGTERM)
 
 	if err != nil {
-		log.Fatal(err)
+		zap.S().Fatal(err)
 	}
 
 	st, err := child.Wait()
 
 	if err != nil {
-		log.Info("daemon exited successfully")
+		zap.S().Info("daemon exited successfully")
 		return nil
 	}
 
-	log.Infof("daemon[%v] exited[%v]? successfully[%v]?\n", st.Pid(), st.Exited(), st.Success())
+	zap.S().Infof("daemon[%v] exited[%v]? successfully[%v]?\n", st.Pid(), st.Exited(), st.Success())
 
 	return nil
 }

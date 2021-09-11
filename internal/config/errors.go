@@ -2,6 +2,8 @@ package config
 
 import (
 	"errors"
+
+	"go.uber.org/zap"
 )
 
 // Define gosh specific errors
@@ -13,6 +15,6 @@ var (
 
 func LogError(err error) {
 	if err != nil {
-		log.Errorf("config: %s", err.Error())
+		L().Error("config: ", zap.Error(err))
 	}
 }

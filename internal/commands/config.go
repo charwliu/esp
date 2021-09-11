@@ -22,6 +22,9 @@ var ConfigCommand = &cli.Command{
 func configAction(ctx *cli.Context) error {
 	conf := config.NewConfig(ctx)
 
+	defer func() {
+		conf.LoggerClose()
+	}()
 	dbDriver := conf.DatabaseDriver()
 
 	fmt.Printf("%-25s VALUE\n", "NAME")
@@ -101,6 +104,7 @@ func configAction(ctx *cli.Context) error {
 	// Thumbs, resampling and download security token.
 	fmt.Printf("%-25s %s\n", "download-token", conf.DownloadToken())
 	fmt.Printf("%-25s %s\n", "preview-token", conf.PreviewToken())
+
 
 	return nil
 }

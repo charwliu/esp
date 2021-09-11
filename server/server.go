@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"path/filepath"
 
+	"github.com/caddyserver/certmagic"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cache"
 	"github.com/gofiber/fiber/v2/middleware/compress"
@@ -25,7 +26,6 @@ import (
 	"gorm.io/gorm"
 
 	configuration "go.vixal.xyz/esp/internal/config"
-	"go.vixal.xyz/esp/internal/event"
 	"go.vixal.xyz/esp/pkg/middleware"
 	"go.vixal.xyz/esp/pkg/routes"
 )
@@ -223,8 +223,8 @@ func Start(ctx context.Context, config *configuration.Config) {
 
 	// Register application API routes (using the /api/v1 group)
 	api := app.Group("/api")
-	apiv1 := api.Group("/v1")
-	routes.RegisterAPI(apiv1)
+	apiV1 := api.Group("/v1")
+	routes.RegisterAPI(apiV1)
 
 	// Register static routes for the public directory
 	app.Static("/", config.BuildPath())
@@ -245,13 +245,23 @@ func Start(ctx context.Context, config *configuration.Config) {
 		return nil
 	})
 
-	// Start listening on the specified address
-	err := app.Listen(fmt.Sprintf("%s:%d", config.HttpHost(), config.HttpPort()))
+	ln, err := certmagic.Listen([]string{config.HttpHost()})
 	if err != nil {
-		log.Error("Starting listening on the specified address", zap.Error(err))
-		return
+		S().Error("listen", zap.Error(err))
+		if err = app.ListenTLS(fmt.Sprintf("%s:%d", config.HttpHost(), config.HttpPort()), config.CertFile(),
+			config.KeyFile()); err != nil {
+			S().Error("Starting listening on the specified address", zap.Error(err))
+			return
+		}
+	} else {
+		if err = app.Listener(ln); err != nil {
+			S().Error("Starting listening on the specified address", zap.Error(err))
+			return
+		}
 	}
 
 }
 
-var log = event.Log.Sugar()
+func S() *zap.SugaredLogger {
+	return zap.S().Named("server")
+}

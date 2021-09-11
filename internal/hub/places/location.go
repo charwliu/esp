@@ -8,6 +8,8 @@ import (
 	"strings"
 	"time"
 
+	"go.uber.org/zap"
+
 	"go.vixal.xyz/esp/pkg/s2"
 	"go.vixal.xyz/esp/pkg/txt"
 )
@@ -57,7 +59,9 @@ func FindLocation(id string) (result Location, err error) {
 	}
 
 	if hit, ok := cache.Get(id); ok {
-		log.Debugf("places: cache hit for lat %f, lng %f", lat, lng)
+		L().Debug("places: cache hit for",
+			zap.Float64("lat", lat),
+			zap.Float64("lng", lng))
 		cached := hit.(Location)
 		cached.Cached = true
 		return cached, nil
@@ -65,12 +69,12 @@ func FindLocation(id string) (result Location, err error) {
 
 	url := fmt.Sprintf(ReverseLookupURL, id)
 
-	log.Debugf("places: sending request to %s", url)
+	L().Debug("places: sending request to", zap.String("url", url))
 
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 
 	if err != nil {
-		log.Errorf("places: %s", err.Error())
+		L().Error("places:", zap.Error(err))
 		return result, err
 	}
 
@@ -92,7 +96,7 @@ func FindLocation(id string) (result Location, err error) {
 	}
 
 	if err != nil {
-		log.Errorf("places: %s (http request)", err.Error())
+		L().Error("places: (http request)", zap.Error(err))
 		return result, err
 	} else if r.StatusCode >= 400 {
 		err = fmt.Errorf("request failed with code %d (%s)", r.StatusCode, ApiName)
@@ -102,7 +106,7 @@ func FindLocation(id string) (result Location, err error) {
 	err = json.NewDecoder(r.Body).Decode(&result)
 
 	if err != nil {
-		log.Errorf("places: %s (decode json)", err.Error())
+		L().Error("places: (decode json)", zap.Error(err))
 		return result, err
 	}
 
@@ -111,7 +115,8 @@ func FindLocation(id string) (result Location, err error) {
 	}
 
 	cache.SetDefault(id, result)
-	log.Debugf("places: cached cell %s [%s]", id, time.Since(start))
+	L().Debug("places: cached cell", zap.String("id", id),
+		zap.Duration("start", time.Since(start)))
 
 	result.Cached = false
 

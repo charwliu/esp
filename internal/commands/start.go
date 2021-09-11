@@ -11,6 +11,7 @@ import (
 
 	"github.com/sevlyar/go-daemon"
 	"github.com/urfave/cli/v2"
+	"go.uber.org/zap"
 
 	"go.vixal.xyz/esp/internal/config"
 	"go.vixal.xyz/esp/internal/service"
@@ -45,6 +46,9 @@ var startFlags = []cli.Flag{
 // startAction start the web server and initializes the daemon
 func startAction(ctx *cli.Context) error {
 	conf := config.NewConfig(ctx)
+	defer func() {
+		conf.LoggerClose()
+	}()
 	service.SetConfig(conf)
 
 	if ctx.IsSet("config") {
@@ -59,14 +63,14 @@ func startAction(ctx *cli.Context) error {
 	}
 
 	if conf.HttpPort() < 1 || conf.HttpPort() > 65535 {
-		log.Fatal("server port must be a number between 1 and 65535")
+		zap.S().Fatal("server port must be a number between 1 and 65535")
 	}
 
 	// pass this context down the chain
 	cctx, cancel := context.WithCancel(context.Background())
 
 	if err := conf.Init(); err != nil {
-		log.Fatal(err)
+		zap.S().Fatal(err)
 	}
 
 	// initialize the database
@@ -83,27 +87,27 @@ func startAction(ctx *cli.Context) error {
 		cancel()
 
 		if pid, ok := childAlreadyRunning(conf.PIDFilename()); ok {
-			log.Infof("daemon already running with process id %v\n", pid)
+			zap.S().Infof("daemon already running with process id %v\n", pid)
 			return nil
 		}
 
 		child, err := dctx.Reborn()
 		if err != nil {
-			log.Fatal(err)
+			zap.S().Fatal(err)
 		}
 
 		if child != nil {
 			if !fs.Overwrite(conf.PIDFilename(), []byte(strconv.Itoa(child.Pid))) {
-				log.Fatalf("failed writing process id to %s", txt.Quote(conf.PIDFilename()))
+				zap.S().Fatalf("failed writing process id to %s", txt.Quote(conf.PIDFilename()))
 			}
 
-			log.Infof("daemon started with process id %v\n", child.Pid)
+			zap.S().Infof("daemon started with process id %v\n", child.Pid)
 			return nil
 		}
 	}
 
 	if conf.ReadOnly() {
-		log.Infof("start: read-only mode enabled")
+		zap.S().Infof("start: read-only mode enabled")
 	}
 
 	// start web server
@@ -119,13 +123,13 @@ func startAction(ctx *cli.Context) error {
 	//workers.Stop()
 	//auto.Stop()
 
-	log.Info("shutting down...")
+	zap.S().Info("shutting down...")
 	conf.Shutdown()
 	cancel()
 	err := dctx.Release()
 
 	if err != nil {
-		log.Error(err)
+		zap.S().Error(err)
 	}
 
 	time.Sleep(3 * time.Second)

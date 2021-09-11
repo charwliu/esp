@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/urfave/cli/v2"
+	"go.uber.org/zap"
 
 	"go.vixal.xyz/esp/internal/config"
 )
@@ -22,6 +23,10 @@ func migrateAction(ctx *cli.Context) error {
 
 	conf := config.NewConfig(ctx)
 
+	defer func() {
+		conf.LoggerClose()
+	}()
+
 	_, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
@@ -29,13 +34,13 @@ func migrateAction(ctx *cli.Context) error {
 		return err
 	}
 
-	log.Info("migrating database")
+	zap.S().Info("migrating database")
 
 	conf.InitDB()
 
 	elapsed := time.Since(start)
 
-	log.Infof("database migration completed in %s", elapsed)
+	zap.S().Infof("database migration completed in %s", elapsed)
 
 	conf.Shutdown()
 

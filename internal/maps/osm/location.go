@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/melihmucuk/geocache"
+	"go.uber.org/zap"
 
 	"go.vixal.xyz/esp/pkg/s2"
 )
@@ -41,7 +42,8 @@ func FindLocation(id string) (result Location, err error) {
 	point := geocache.GeoPoint{Latitude: lat, Longitude: lng}
 
 	if hit, ok := geoCache.Get(point); ok {
-		log.Debugf("osm: cache hit for lat %f, lng %f", lat, lng)
+		L().Debug("osm: cache hit for",
+			zap.Float64("lat", lat), zap.Float64("lng", lng))
 		result = hit.(Location)
 		result.Cached = true
 		return result, nil
@@ -49,19 +51,19 @@ func FindLocation(id string) (result Location, err error) {
 
 	url := fmt.Sprintf(ReverseLookupURL, lat, lng)
 
-	log.Debugf("osm: query %s", url)
+	L().Debug("osm: query", zap.String("url", url))
 
 	r, err := http.Get(url)
 
 	if err != nil {
-		log.Errorf("osm: %s", err.Error())
+		L().Error("osm: ", zap.Error(err))
 		return result, err
 	}
 
 	err = json.NewDecoder(r.Body).Decode(&result)
 
 	if err != nil {
-		log.Errorf("osm: %s", err.Error())
+		L().Error("osm: ", zap.Error(err))
 		return result, err
 	}
 

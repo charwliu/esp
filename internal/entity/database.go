@@ -1,7 +1,7 @@
 package entity
 
 import (
-	"fmt"
+	"errors"
 	"sync"
 	"time"
 
@@ -11,13 +11,17 @@ import (
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
+
+	"go.vixal.xyz/esp/internal/mutex"
 )
 
 // Database drivers (sql dialects).
 const (
-	MySQL    = "mysql"
-	SQLite   = "sqlite3"
-	Postgres = "postgres"
+	MySQL     = "mysql"
+	MariaDB   = "mariadb"
+	SQLite    = "sqlite3"
+	Postgres  = "postgres"
+	SQLServer = "sqlserver"
 )
 
 type DBConfig struct {
@@ -69,35 +73,48 @@ type Gorm struct {
 }
 
 func (g *Gorm) DB() *gorm.DB {
-	g.once.Do(g.Connect)
 	if g.db == nil {
-		log.Fatal("entity: database not connected")
+		L().Fatal("entity: database not connected")
 	}
 	return g.db
 }
 
-func (g *Gorm) Connect() {
+func (g *Gorm) Connect() error {
+	mutex.DB.Lock()
+	defer mutex.DB.Unlock()
+	dbDriver := g.Driver
+	dbDsn := g.Dsn
+
+	if dbDriver == "" {
+		return errors.New("config: database driver not specified")
+	}
+
+	if dbDsn == "" {
+		return errors.New("config: database DSN not specified")
+	}
+
 	var db *gorm.DB
 	var err error
 	var i int
 	for {
-		switch g.Driver {
-		case MySQL:
-			db, err = gorm.Open(mysql.Open(g.Dsn),
+		switch dbDriver {
+		case MySQL, MariaDB:
+			db, err = gorm.Open(mysql.Open(dbDsn),
 				&gorm.Config{Logger: logger.Default.LogMode(logger.Silent)},
 			)
 			break
 		case Postgres:
-			db, err = gorm.Open(postgres.Open(g.Dsn),
-				&gorm.Config{Logger: logger.Default.LogMode(logger.Silent)},
+			db, err = gorm.Open(postgres.Open(dbDsn),
+				&gorm.Config{Logger: logger.Default.LogMode(logger.Info)},
 			)
 			break
 		case SQLite:
-			db, err = gorm.Open(sqlite.Open(g.Dsn),
+			db, err = gorm.Open(sqlite.Open(dbDsn),
 				&gorm.Config{Logger: logger.Default.LogMode(logger.Silent)},
 			)
-			break // Not required as unicode is default.
+			break
 		}
+
 		if i == 12 || (db != nil && err == nil) {
 			break
 		} else {
@@ -106,15 +123,16 @@ func (g *Gorm) Connect() {
 		}
 	}
 	if err != nil || db == nil {
-		fmt.Println(err)
-		log.Fatal(err)
+		L().Fatal(err.Error())
 	}
-	sqlDB, err := db.DB()
-	if err == nil {
+
+	if sqlDB, err := db.DB(); err == nil {
 		sqlDB.SetMaxIdleConns(4)
 		sqlDB.SetMaxOpenConns(256)
+		sqlDB.SetConnMaxLifetime(10 * time.Minute)
 	}
 	g.db = db
+	return err
 }
 
 type DefaultModel struct {
@@ -138,7 +156,7 @@ func (g *Gorm) Close() {
 	}
 	if sqlDB, e := g.db.DB(); e == nil {
 		if err := sqlDB.Close(); err != nil {
-			log.Fatal(err)
+			L().Fatal(err.Error())
 		}
 		g.db = nil
 	}

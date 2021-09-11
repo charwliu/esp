@@ -34,10 +34,16 @@ func (Role) TableName() string {
 	return "role"
 }
 
-func (r *Role) Save() {
-	DB().Save(r)
+func (r *Role) Save() error {
+	return DB().Save(r).Error
 }
 
-func (r *Role) Delete() {
-	DB().Delete(r)
+func (r *Role) Delete() error {
+	return DB().Delete(r).Error
 }
+
+func (r *Role) Create() error {
+	return DB().Create(r).Error
+}
+
+

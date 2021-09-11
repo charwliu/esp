@@ -19,7 +19,7 @@ type CourseTerm struct {
 	UpdatedBy  string    `gorm:"size:64;default:''" json:"updateBy"`  // 更新者
 	CreatedAt  time.Time `json:"created_at"`                          // 创建时间
 	UpdatedAt  time.Time `json:"updated_at"`                          // 更新时间
-	Dept       *Dept
+	Dept       *Department
 }
 
 // CourseTermColumns get sql column name.获取数据库列名

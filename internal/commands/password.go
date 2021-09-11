@@ -11,6 +11,7 @@ import (
 	"syscall"
 
 	"github.com/urfave/cli/v2"
+	"go.uber.org/zap"
 
 	"go.vixal.xyz/esp/internal/config"
 	"go.vixal.xyz/esp/internal/entity"
@@ -27,7 +28,9 @@ var PasswdCommand = &cli.Command{
 // passwdAction updates a password.
 func passwdAction(ctx *cli.Context) error {
 	conf := config.NewConfig(ctx)
-
+	defer func() {
+		conf.LoggerClose()
+	}()
 	_, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	if err := conf.Init(); err != nil {
@@ -36,7 +39,7 @@ func passwdAction(ctx *cli.Context) error {
 
 	conf.InitDB()
 	user := entity.Admin
-	log.Infof("please enter a new password for %s (at least 6 characters)\n", txt.Quote(user.UserName))
+	zap.S().Infof("please enter a new password for %s (at least 6 characters)\n", txt.Quote(user.UserName))
 
 	newPassword := getPassword("New Password: ")
 
@@ -54,7 +57,7 @@ func passwdAction(ctx *cli.Context) error {
 		return err
 	}
 
-	log.Infof("changed password for %s\n", txt.Quote(user.UserName))
+	zap.S().Infof("changed password for %s\n", txt.Quote(user.UserName))
 
 	conf.Shutdown()
 

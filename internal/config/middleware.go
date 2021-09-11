@@ -1,13 +1,26 @@
 package config
 
 type AccessLoggerConfig struct {
-	Enabled     bool   `yaml:"Enabled"`
-	Type        string `yaml:"ClientType"`
-	Environment string `yaml:"Environment"`
-	Filename    string `yaml:"Filename"`
-	MaxSize     int    `yaml:"MaxSize"`
-	MaxAge      int    `yaml:"MaxAge"`
-	MaxBackups  int    `yaml:"MaxBackups"`
-	LocalTime   bool   `yaml:"LocalTime"`
-	Compress    bool   `yaml:"Compress"`
+	*LoggerConfig
+	Enabled bool `yaml:"Enabled" json:"enabled"`
+}
+
+
+func (c *Config) AccessLogger() *AccessLoggerConfig {
+	if c.options.AccessLoggerConfig == nil {
+		c.options.AccessLoggerConfig = &AccessLoggerConfig{
+			LoggerConfig: &LoggerConfig{
+				Type:        "console",
+				Environment: "",
+				Filename:    "access.log",
+				MaxSize:     500,
+				MaxAge:      28,
+				MaxBackups:  3,
+				LocalTime:   false,
+				Compress:    false,
+			},
+			Enabled: true,
+		}
+	}
+	return c.options.AccessLoggerConfig
 }

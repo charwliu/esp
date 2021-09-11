@@ -9,7 +9,7 @@ type CourseArticle struct {
 	ID             int64     `gorm:"primary_key;not null" json:"articleId"` // 编号
 	ClassifyID     string    `gorm:"size:32" json:"classifyId"`             // 文章所属分类
 	ArticleTitle   string    `gorm:"size:100" json:"articleTitle"`          // 标题
-	ArticleContent string    `gorm:"type:longtext" json:"articleContent"`   // 内容
+	ArticleContent string    `gorm:"type:text" json:"articleContent"`       // 内容
 	ArticleTime    int       `json:"articleTime"`                           // 阅读时间
 	WordNumber     int       `json:"wordNumber"`                            // 文章字数
 	ArticleLabel   string    `gorm:"size:100" json:"articleLabel"`          // 文章标签

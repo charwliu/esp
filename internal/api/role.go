@@ -2,6 +2,7 @@ package api
 
 import (
 	"github.com/gofiber/fiber/v2"
+	"go.uber.org/zap"
 
 	"go.vixal.xyz/esp/app/models"
 	"go.vixal.xyz/esp/internal/entity"
@@ -13,7 +14,7 @@ func GetAllRoles(router fiber.Router) {
 	router.Get("/", func(ctx *fiber.Ctx) error {
 		var Roles []entity.Role
 		if err := entity.DB().Find(&Roles).Error; err != nil {
-			log.Errorf("Error occurred while retrieving roles from the database: %v ", err)
+			zap.S().Errorf("Error occurred while retrieving roles from the database: %v ", err)
 			return Unexpected(ctx, err)
 		}
 		return Ok(ctx, Roles)
@@ -26,7 +27,7 @@ func GetRole(router fiber.Router) {
 		Role := new(entity.Role)
 		id := ctx.Params("id")
 		if err := entity.DB().Find(&Role, "id = ?", id).Error; err != nil {
-			log.Errorf("An error occurred when retrieving the role: %v", err)
+			zap.S().Errorf("An error occurred when retrieving the role: %v", err)
 			return Unexpected(ctx, err)
 		}
 		if Role.ID == 0 {
@@ -42,11 +43,11 @@ func AddRole(router fiber.Router) {
 	router.Post("/", func(ctx *fiber.Ctx) error {
 		Role := new(models.Role)
 		if err := ctx.BodyParser(Role); err != nil {
-			log.Errorf("An error occurred when parsing the new role: %v", err)
+			zap.S().Errorf("An error occurred when parsing the new role: %v", err)
 			return Unexpected(ctx, err)
 		}
 		if err := entity.DB().Create(&Role).Error; err != nil {
-			log.Errorf("An error occurred when storing the new role: %v ", err)
+			zap.S().Errorf("An error occurred when storing the new role: %v ", err)
 			return Unexpected(ctx, err)
 		}
 		return Ok(ctx, Role)
@@ -60,11 +61,11 @@ func EditRole(router fiber.Router) {
 		EditRole := new(entity.Role)
 		Role := new(entity.Role)
 		if err := ctx.BodyParser(EditRole); err != nil {
-			log.Errorf("An error occurred when parsing the edited role: %v", err)
+			zap.S().Errorf("An error occurred when parsing the edited role: %v", err)
 			return Unexpected(ctx, err)
 		}
 		if err := entity.DB().Find(&Role, id).Error; err != nil {
-			log.Errorf("An error occurred when retrieving the existing role: %v", err)
+			zap.S().Errorf("An error occurred when retrieving the existing role: %v", err)
 			return Unexpected(ctx, err)
 		}
 		// Role does not exist
@@ -87,7 +88,7 @@ func DeleteRole(router fiber.Router) {
 		var Role entity.Role
 		entity.DB().Find(&Role, id)
 		if err := entity.DB().Find(&Role).Error; err != nil {
-			log.Errorf("An error occurred when finding the role to be deleted: %v", err)
+			zap.S().Errorf("An error occurred when finding the role to be deleted: %v", err)
 			return JSONError(ctx, fiber.StatusInternalServerError, i18n.ErrUnexpected, err)
 		}
 		Role.Delete()

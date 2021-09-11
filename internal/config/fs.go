@@ -7,6 +7,8 @@ import (
 	"os/user"
 	"path/filepath"
 
+	"go.uber.org/zap"
+
 	"go.vixal.xyz/esp/pkg/fs"
 	"go.vixal.xyz/esp/pkg/txt"
 )
@@ -38,7 +40,7 @@ func (c *Config) CreateDirectories() error {
 			result = fmt.Errorf("can't create %s: please check configuration and permissions", txt.Quote(path))
 		}
 
-		log.Debug(err)
+		L().Error("config:", zap.Error(err))
 
 		return result
 	}
